@@ -20,7 +20,7 @@ while (true)
     var outputBuffer = System.Text.Encoding.UTF8.GetBytes(output);
 
     // log and respond
-    Console.WriteLine(@$"{input.Length} Received: {input.ReplaceLineEndings("\\r\\n")}. Response: {output}");
+    Console.WriteLine(@$"Received: {input}. Response: {output}");
     stream.Write(outputBuffer);
     client.Close();
 }
