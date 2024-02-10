@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-Console.WriteLine("Logs from your program will appear here!");
+Console.WriteLine("Starting TcpListener!");
 TcpListener server = new TcpListener(IPAddress.Any, 6379);
 server.Start();
 while (true)
