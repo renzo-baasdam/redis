@@ -16,11 +16,11 @@ while (true)
     var input = System.Text.Encoding.UTF8.GetString(buffer);
 
     // output string to bytes
-    var output = @"+PONG\r\n";
+    var output = "+PONG\r\n";
     var outputBuffer = System.Text.Encoding.UTF8.GetBytes(output);
 
     // log and respond
-    Console.WriteLine(@$"Received: {input}. Response: {output}");
+    Console.WriteLine(@$"Received: {input.Replace("\r\n", "\\r\\n")}. Response: {output.Replace("\r\n", "\\r\\n")}");
     stream.Write(outputBuffer);
     client.Close();
 }
