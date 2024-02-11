@@ -38,7 +38,7 @@ static async void Listen(Socket socket, int socketNumber)
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Caught exception: {ex}");
+            Console.WriteLine($"Caught exception: {ex.Message}");
             break;
         }
     }
@@ -58,9 +58,9 @@ static string Response(string input)
             return command.ToUpperInvariant() switch
             {
                 "ECHO" => lines[4],
-                "PING" => "+PONG",
+                "PING" => "+PONG\r\n",
                 _ => "Unsupported request"
-            } + "\r\n";
+            };
         }
     }
     return "Unsupported request";
