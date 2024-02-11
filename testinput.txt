@@ -1,5 +1,7 @@
 *2
-$4
-ECHO
 $3
-watermelon
+GET
+$3
+keya
+$5
+value
