@@ -60,7 +60,7 @@ static string Response(string input)
                 "ECHO" => lines[4],
                 "PING" => "+PONG",
                 _ => "Unsupported request"
-            };
+            } + "\r\n";
         }
     }
     return "Unsupported request";
