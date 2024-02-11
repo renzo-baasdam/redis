@@ -62,7 +62,7 @@ public class RedisServer
     {
         if (_dictionary.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.Now))
             return value.Value.AsBulkString();
-        return "_\r\n";
+        return "$-1\r\n";
     }
 
     private string Set(string[] lines)
