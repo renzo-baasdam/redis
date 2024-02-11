@@ -2,4 +2,4 @@
 $4
 ECHO
 $3
-hey
+watermelon

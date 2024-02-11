@@ -26,7 +26,8 @@ static async void Listen(Socket socket, int socketNumber)
             await socket.ReceiveAsync(buffer, SocketFlags.None);
 
             // input bytes to string
-            var input = Encoding.UTF8.GetString(buffer);
+            var bufferEnd = Array.IndexOf(buffer, (byte)0);
+            var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
 
             // output string to bytes
             var output = Response(input);
@@ -57,11 +58,16 @@ static string Response(string input)
             var command = lines[2];
             return command.ToUpperInvariant() switch
             {
-                "ECHO" => lines[4],
+                "ECHO" => lines[4].AsBulkString(),
                 "PING" => "+PONG\r\n",
                 _ => "Unsupported request"
             };
         }
     }
     return "Unsupported request";
+}
+
+internal static class StringExtensions
+{
+    internal static string AsBulkString(this string str) => $"${str.Length}\r\n{str}\r\n";
 }
