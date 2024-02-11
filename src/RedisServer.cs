@@ -3,9 +3,15 @@ using System.Net.Sockets;
 using System.Text;
 namespace Redis;
 
+internal record RedisValue
+{
+    public string Value { get; init; } = string.Empty;
+    public DateTime? Expiration { get; init; }
+}
+
 public class RedisServer
 {
-    private readonly Dictionary<string, string> _dictionary = new();
+    private readonly Dictionary<string, RedisValue> _dictionary = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
 
     public async Task Start()
@@ -54,13 +60,27 @@ public class RedisServer
 
     private string Get(string key)
     {
-        if(_dictionary.TryGetValue(key, out var value)) return value.AsBulkString();
+        if (_dictionary.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.Now))
+            return value.Value.AsBulkString();
         return "_\r\n";
     }
 
-    private string Set(string key, string value)
+    private string Set(string[] lines)
     {
-        _dictionary[key] = value;
+        var key = lines[4];
+        var value = lines[6];
+        if (lines.Length > 8 && lines[8].ToUpperInvariant() == "PX")
+        {
+            _dictionary[key] = new RedisValue()
+            {
+                Value = value,
+                Expiration = DateTime.Now.AddMilliseconds(int.Parse(lines[10]))
+            };
+        }
+        else
+        {
+            _dictionary[key] = new RedisValue() { Value = value };
+        }
         return "+OK\r\n";
     }
 
@@ -77,7 +97,7 @@ public class RedisServer
                 var command = lines[2];
                 return command.ToUpperInvariant() switch
                 {
-                    "SET" => Set(lines[4], lines[6]),
+                    "SET" => Set(lines),
                     "GET" => Get(lines[4]),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
