@@ -55,7 +55,7 @@ static string Response(string input)
             && int.TryParse(arguments[1..], out var numberOfArguments))
         {
             var command = lines[2];
-            return command.ToLowerInvariant() switch
+            return command.ToUpperInvariant() switch
             {
                 "ECHO" => lines[4],
                 "PING" => "+PONG",
