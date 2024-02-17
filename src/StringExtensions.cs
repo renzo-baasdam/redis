@@ -4,6 +4,7 @@ namespace Redis;
 
 internal static class StringExtensions
 {
+    internal static string AsArgumentString(this string str) => $"$--{str}";
     internal static string AsBulkString(this string str) => $"${str.Length}\r\n{str}\r\n";
 
     internal static string AsBulkString(this string[] response)
