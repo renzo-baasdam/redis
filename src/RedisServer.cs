@@ -11,8 +11,14 @@ internal record RedisValue
 
 public class RedisServer
 {
-    private readonly Dictionary<string, RedisValue> _dictionary = new();
+    private readonly Dictionary<string, RedisValue> _cache = new();
+    private readonly Dictionary<string, string> _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
+
+    public RedisServer(Dictionary<string, string> config)
+    {
+        _config = config;
+    }
 
     public async Task Start()
     {
@@ -58,9 +64,19 @@ public class RedisServer
         }
     }
 
+    private string Config(string[] lines)
+    {
+        if (lines[6].ToUpperInvariant() == "GET")
+        {
+            if (_config.TryGetValue(lines[8], out var value))
+                return new string[] { lines[8], value }.AsBulkString();
+        }
+        return "$-1\r\n";
+    }
+
     private string Get(string key)
     {
-        if (_dictionary.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.Now))
+        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.Now))
             return value.Value.AsBulkString();
         return "$-1\r\n";
     }
@@ -71,7 +87,7 @@ public class RedisServer
         var value = lines[6];
         if (lines.Length > 8 && lines[8].ToUpperInvariant() == "PX")
         {
-            _dictionary[key] = new RedisValue()
+            _cache[key] = new RedisValue()
             {
                 Value = value,
                 Expiration = DateTime.Now.AddMilliseconds(int.Parse(lines[10]))
@@ -79,7 +95,7 @@ public class RedisServer
         }
         else
         {
-            _dictionary[key] = new RedisValue() { Value = value };
+            _cache[key] = new RedisValue() { Value = value };
         }
         return "+OK\r\n";
     }
@@ -99,6 +115,7 @@ public class RedisServer
                 {
                     "SET" => Set(lines),
                     "GET" => Get(lines[4]),
+                    "CONFIG" => Config(lines),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
                     _ => "Unsupported request"
