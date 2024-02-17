@@ -1,8 +1,11 @@
 {
   "profiles": {
-    "codecrafters-redis": {
+    "redis-with": {
       "commandName": "Project",
       "commandLineArgs": "--dir /tmp/rdbfiles779178623 --dbfilename pear.rdb"
+    },
+    "redis-without": {
+      "commandName": "Project"
     }
   }
 }

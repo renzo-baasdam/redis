@@ -9,7 +9,7 @@ internal record RedisValue
     public DateTime? Expiration { get; init; }
 }
 
-public class RedisServer
+public partial class RedisServer
 {
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly Dictionary<string, string> _config = new();
@@ -23,7 +23,8 @@ public class RedisServer
     public async Task Start()
     {
         Console.WriteLine("Starting Redis...");
-        Console.WriteLine($"With persistence path: {_config[RedisConfigKeys.Directory]}/{_config[RedisConfigKeys.Filename]}");
+        if(PersistencePath is not null) 
+            Console.WriteLine($"With persistence path: {_config[RedisConfigKeys.Directory]}/{_config[RedisConfigKeys.Filename]}");
         _server.Start();
         int socketNumber = 0;
         while (true)
