@@ -22,7 +22,8 @@ public class RedisServer
 
     public async Task Start()
     {
-        Console.WriteLine("Starting TcpListener");
+        Console.WriteLine("Starting Redis...");
+        Console.WriteLine($"With persistence path: {_config[RedisConfigKeys.Directory]}/{_config[RedisConfigKeys.Filename]}");
         _server.Start();
         int socketNumber = 0;
         while (true)
