@@ -2,7 +2,7 @@ namespace Redis;
 
 public static class Program
 {
-    public static async void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var config = new Dictionary<string,string>();
         for (int i = 0; i < args.Length; i += 2)
