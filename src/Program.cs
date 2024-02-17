@@ -4,6 +4,7 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
+        Console.WriteLine(string.Join(",", args));
         var config = new Dictionary<string, string>();
         for (int i = 0; i < args.Length; i += 2)
         {
