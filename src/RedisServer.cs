@@ -120,11 +120,11 @@ public partial class RedisServer
                     "CONFIG" => Config(lines),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
-                    _ => "Unsupported request"
+                    _ => "Unsupported request\r\n"
                 };
             }
         }
-        return "Unsupported request";
+        return "Unsupported request\r\n";
     }
 
 }
