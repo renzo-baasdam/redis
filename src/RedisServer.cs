@@ -68,10 +68,10 @@ public partial class RedisServer
 
     private string Config(string[] lines)
     {
-        if (lines[6].ToUpperInvariant() == "GET")
+        if (lines[4].ToUpperInvariant() == "GET")
         {
-            if (_config.TryGetValue(lines[8], out var value))
-                return new string[] { lines[8], value }.AsBulkString();
+            if (_config.TryGetValue(lines[6], out var value))
+                return new string[] { lines[6], value }.AsBulkString();
         }
         return "$-1\r\n";
     }

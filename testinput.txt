@@ -1,11 +1,7 @@
-*2
+*3
+$6
+config
 $3
-GET
+get
 $3
-keya
-$5
-value
-$5
-PX
-$5
-10000
+dir
