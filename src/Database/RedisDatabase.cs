@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
@@ -63,7 +62,7 @@ internal partial class RedisDatabase
     internal static uint DecodeLengthEncoding(ref int index, byte[] bytes)
     {
         int i = index;
-        var firstTwoBits = bytes[i] >>> 6;
+        var firstTwoBits = (uint)bytes[i] >> 6;
         if (firstTwoBits == 0x00)
         {
             index += 1;
@@ -83,6 +82,6 @@ internal partial class RedisDatabase
         {
             throw new NotSupportedException("Length encoding starts with 11, indicating special format, which is currently not supported.");
         }
-        throw new UnreachableException("Reached a part of the code that should not be reachable.");
+        throw new InvalidDataException("Reached a part of the code that should not be reachable.");
     }
 }
