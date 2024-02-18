@@ -19,6 +19,6 @@ internal partial class RedisDatabase
         public uint DatabaseHashTableSize { get; set; }
         public uint ExpiryHashTableSize { get; set; }
 
-        public Dictionary<string, string> Values = new();
+        public Dictionary<string, RedisValue> Values = new();
     }
 }

@@ -1,3 +1,4 @@
+using Redis.Database;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -14,6 +15,7 @@ public partial class RedisServer
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly Dictionary<string, string> _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
+    private RedisDatabase? _database { get; set; }
 
     public RedisServer(Dictionary<string, string> config)
     {
@@ -23,8 +25,21 @@ public partial class RedisServer
     public async Task Start()
     {
         Console.WriteLine("Starting Redis...");
-        if(PersistencePath is not null) 
-            Console.WriteLine($"With persistence path: {_config[RedisConfigKeys.Directory]}/{_config[RedisConfigKeys.Filename]}");
+        if (DatabasePath is not null)
+        {
+            try
+            {
+                Console.WriteLine($"Loading database from: {DatabasePath}");
+                var bytes = File.ReadAllBytes(DatabasePath);
+                _database = RedisDatabase.FromBytes(bytes);
+                foreach(var kv in _database.Databases[0].Values)
+                    _cache[kv.Key] = kv.Value;
+                Console.WriteLine($"Loaded database successfully.");
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading database: {ex.Message}");
+            }
+        }
         _server.Start();
         int socketNumber = 0;
         while (true)
@@ -76,6 +91,15 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
+    private string Keys()
+    {
+        return _cache
+            .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.Now)
+            .Select(x => x.Key)
+            .ToArray()
+            .AsBulkString();
+    }
+
     private string Get(string key)
     {
         if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.Now))
@@ -118,6 +142,7 @@ public partial class RedisServer
                     "SET" => Set(lines),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
+                    "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
                     _ => "Unsupported request\r\n"

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Redis.Database;
@@ -11,13 +10,12 @@ internal partial class RedisDatabase
         int index = 0;
         do
         {
-            if (!db.ExecuteOpcode(ref index, bytes)) break;
+            if (!db.ParseOpcode(ref index, bytes)) break;
         } while (true);
         return db;
     }
 
-    [SuppressMessage("Style", "IDE0017:Simplify object initialization", Justification = "Separate initialization from parsing.")]
-    private bool ExecuteOpcode(ref int index, byte[] bytes)
+    internal bool ParseOpcode(ref int index, byte[] bytes)
     {
         if (bytes[index] == 0xFE) // parse database selector
         {
@@ -25,12 +23,12 @@ internal partial class RedisDatabase
             db.DatabaseNumber = bytes[++index];
             if (bytes[++index] != 0xFB) throw new InvalidDataException("Expected 0xFB, the Resizedb information.");
             ++index;
-            db.DatabaseHashTableSize = DecodeLengthEncoding(ref index, bytes);
-            db.ExpiryHashTableSize = DecodeLengthEncoding(ref index, bytes);
+            db.DatabaseHashTableSize = DecodeLength(ref index, bytes);
+            db.ExpiryHashTableSize = DecodeLength(ref index, bytes);
             int valueType = bytes[index++];
-            string key = DecodeStringEncoding(ref index, bytes);
+            string key = DecodeLengthPrefixedString(ref index, bytes);
             string value = DecodeValue(ref index, bytes, valueType);
-            db.Values[key] = value;
+            db.Values[key] = new() { Value = value };
             Databases.Add(db);
         }
         else if (bytes[index] == 0xFF)
@@ -47,38 +45,42 @@ internal partial class RedisDatabase
     internal static string DecodeValue(ref int index, byte[] bytes, int valueType)
         => valueType switch
         {
-            0 => DecodeStringEncoding(ref index, bytes),
+            0 => DecodeLengthPrefixedString(ref index, bytes),
             _ => throw new NotSupportedException($"Only Value type 0 is currently supported, found {valueType}. ")
         };
 
-    internal static string DecodeStringEncoding(ref int index, byte[] bytes)
+    internal static string DecodeLengthPrefixedString(ref int index, byte[] bytes)
     {
-        var length = DecodeLengthEncoding(ref index, bytes);
+        var length = DecodeLength(ref index, bytes);
         var decoded = Encoding.UTF8.GetString(bytes, index, (int)length);
         index += (int)length;
         return decoded;
     }
 
-    internal static uint DecodeLengthEncoding(ref int index, byte[] bytes)
+    internal static uint DecodeLength(ref int index, byte[] bytes)
     {
         int i = index;
-        var firstTwoBits = (uint)bytes[i] >> 6;
-        if (firstTwoBits == 0x00)
+        var encodingType = (uint)bytes[i] >> 6;
+        if (encodingType == 0b00)
         {
             index += 1;
             return bytes[i];
         }
-        if (firstTwoBits == 0x01)
+        if (encodingType == 0b01)
         {
             index += 2;
-            return (uint)((bytes[i] & 0x111111) << 8 + bytes[i + 1]);
+            return (((uint)(bytes[i] & 0b11_1111) << 8) | bytes[i + 1]);
         }
-        if (firstTwoBits == 0x11)
+        if (encodingType == 0b10)
         {
-            index += 4;
-            return BitConverter.ToUInt32(bytes, i + 1);
+            index += 5;
+            return (uint)
+                 ((bytes[i + 1] << 24)
+                + (bytes[i + 2] << 16)
+                + (bytes[i + 3] << 08)
+                + (bytes[i + 4] << 00));
         }
-        if (firstTwoBits == 0x11)
+        if (encodingType == 0b11)
         {
             throw new NotSupportedException("Length encoding starts with 11, indicating special format, which is currently not supported.");
         }
