@@ -23,11 +23,8 @@ public class Rdb_parser
     {
         var dbInfo = RedisDatabase.FromBytes(_dump);
         dbInfo.Databases.Should().ContainSingle();
-        dbInfo.Databases[0].Should().BeEquivalentTo(new RedisDatabase.Database()
+        dbInfo.Databases[0].Should().BeEquivalentTo(new RedisDatabase.Database(dbNumber: 0, dbHashTableSize: 1, expiryHashTableSize: 0)
         {
-            DatabaseNumber = 0,
-            DatabaseHashTableSize = 1,
-            ExpiryHashTableSize = 0,
             Values = new Dictionary<string, RedisValue>()
             {
                 { "mykey", new() { Value = "myval" } }

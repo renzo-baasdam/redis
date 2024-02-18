@@ -15,7 +15,14 @@ internal partial class RedisDatabase
 
     internal class Database
     {
-        public uint DatabaseNumber { get; set; }
+        public Database(uint dbNumber, uint dbHashTableSize, uint expiryHashTableSize)
+        {
+            DatabaseNumber = dbNumber;
+            DatabaseHashTableSize = dbHashTableSize;
+            ExpiryHashTableSize = expiryHashTableSize;
+        }
+
+        public uint DatabaseNumber { get; init; }
         public uint DatabaseHashTableSize { get; set; }
         public uint ExpiryHashTableSize { get; set; }
 

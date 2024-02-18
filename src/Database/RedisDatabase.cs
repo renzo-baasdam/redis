@@ -19,12 +19,13 @@ internal partial class RedisDatabase
     {
         if (bytes[index] == 0xFE) // parse database selector
         {
-            var db = new Database();
-            db.DatabaseNumber = bytes[++index];
+            var databaseNumber = bytes[++index];
             if (bytes[++index] != 0xFB) throw new InvalidDataException("Expected 0xFB, the Resizedb information.");
             ++index;
-            db.DatabaseHashTableSize = DecodeLength(ref index, bytes);
-            db.ExpiryHashTableSize = DecodeLength(ref index, bytes);
+            var databaseHashTableSize = DecodeLength(ref index, bytes);
+            var expiryHashTableSize = DecodeLength(ref index, bytes);
+            var db = new Database(databaseNumber, databaseHashTableSize, expiryHashTableSize);
+
             int valueType = bytes[index++];
             string key = DecodeLengthPrefixedString(ref index, bytes);
             string value = DecodeValue(ref index, bytes, valueType);
