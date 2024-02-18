@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Redis.Database;
-using System.Text;
 
 namespace Redis.Tests;
 
