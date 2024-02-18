@@ -11,7 +11,7 @@ internal partial class RedisDatabase
     public int RedisArchitecture { get; set; } = 0;
     public DateTime CreationTime { get; set; }
     public string UsedMemory { get; set; } = string.Empty;
-    public List<Database> Databases { get; set; } = [];
+    public List<Database> Databases { get; set; } = new();
 
     internal class Database
     {
@@ -19,6 +19,6 @@ internal partial class RedisDatabase
         public uint DatabaseHashTableSize { get; set; }
         public uint ExpiryHashTableSize { get; set; }
 
-        public Dictionary<string, string> Values = [];
+        public Dictionary<string, string> Values = new();
     }
 }
