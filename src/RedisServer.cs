@@ -95,7 +95,7 @@ public partial class RedisServer
     private string Keys()
     {
         return _cache
-            .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.Now)
+            .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
             .Select(x => x.Key)
             .ToArray()
             .AsBulkString();
@@ -103,7 +103,7 @@ public partial class RedisServer
 
     private string Get(string key)
     {
-        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.Now))
+        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
             return value.Value.AsBulkString();
         return "$-1\r\n";
     }
@@ -117,7 +117,7 @@ public partial class RedisServer
             _cache[key] = new RedisValue()
             {
                 Value = value,
-                Expiration = DateTime.Now.AddMilliseconds(int.Parse(lines[10]))
+                Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(lines[10]))
             };
         }
         else

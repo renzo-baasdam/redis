@@ -28,10 +28,26 @@ internal partial class RedisDatabase
 
             while (HasNextKeyValue(bytes[index]))
             {
-                int valueType = bytes[index++];
-                string key = DecodeLengthPrefixedString(ref index, bytes);
-                string value = DecodeValue(ref index, bytes, valueType);
-                db.Values[key] = new() { Value = value };
+                // parse expiration
+                DateTime? expiration = null;
+                if (bytes[index] == (byte)0xFD)
+                {
+                    var timeAsInt = BitConverter.ToInt32(bytes, ++index);
+                    index += 4;
+                    expiration =  DateTimeOffset.FromUnixTimeSeconds(timeAsInt).UtcDateTime;
+                }
+                if (bytes[index] == (byte)0xFC)
+                {
+                    var timeAsInt = BitConverter.ToInt64(bytes, ++index);
+                    index += 8;
+                    expiration = DateTimeOffset.FromUnixTimeMilliseconds(timeAsInt).UtcDateTime;
+                };
+
+                // parse key value pair
+                var valueType = bytes[index++];
+                var key = DecodeLengthPrefixedString(ref index, bytes);
+                var value = DecodeValue(ref index, bytes, valueType);
+                db.Values[key] = new() { Value = value, Expiration = expiration };
             }
             Databases.Add(db);
         }
@@ -51,10 +67,10 @@ internal partial class RedisDatabase
     private bool HasNextKeyValue(byte value)
         => ValueTypes.Contains(value) || (value == 0xFD) || (value == 0xFC);
 
-    internal static string DecodeValue(ref int index, byte[] bytes, int valueType)
+    internal static string DecodeValue(ref int index, byte[] bytes, byte valueType)
         => valueType switch
         {
-            0 => DecodeLengthPrefixedString(ref index, bytes),
+            (byte)0x0 => DecodeLengthPrefixedString(ref index, bytes),
             _ => throw new NotSupportedException($"Only Value type 0 is currently supported, found {valueType}. ")
         };
 
