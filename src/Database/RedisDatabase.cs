@@ -26,10 +26,13 @@ internal partial class RedisDatabase
             var expiryHashTableSize = DecodeLength(ref index, bytes);
             var db = new Database(databaseNumber, databaseHashTableSize, expiryHashTableSize);
 
-            int valueType = bytes[index++];
-            string key = DecodeLengthPrefixedString(ref index, bytes);
-            string value = DecodeValue(ref index, bytes, valueType);
-            db.Values[key] = new() { Value = value };
+            while (HasNextKeyValue(bytes[index]))
+            {
+                int valueType = bytes[index++];
+                string key = DecodeLengthPrefixedString(ref index, bytes);
+                string value = DecodeValue(ref index, bytes, valueType);
+                db.Values[key] = new() { Value = value };
+            }
             Databases.Add(db);
         }
         else if (bytes[index] == 0xFF)
@@ -42,6 +45,11 @@ internal partial class RedisDatabase
         }
         return true;
     }
+
+    private static HashSet<byte> ValueTypes = new() { 0, 1, 2, 3, 4, 9, 10, 11, 12, 13, 14 };
+
+    private bool HasNextKeyValue(byte value)
+        => ValueTypes.Contains(value) || (value == 0xFD) || (value == 0xFC);
 
     internal static string DecodeValue(ref int index, byte[] bytes, int valueType)
         => valueType switch
