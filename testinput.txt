@@ -1,7 +1,5 @@
-*3
-$6
-keys
-$3
-*
-$3
-dir
+*2
+$4
+info
+$11
+replication

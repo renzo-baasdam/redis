@@ -98,6 +98,18 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
+    private string Info(string[] lines)
+    {
+        if( lines.Length > 4)
+        {
+            if (lines[4].ToUpperInvariant() == "REPLICATION")
+            {
+                return "role:master".AsBulkString();
+            }
+        }
+        return "$-1\r\n";
+    }
+
     private string Keys()
     {
         return _cache
@@ -149,6 +161,7 @@ public partial class RedisServer
                     "SET" => Set(lines),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
+                    "INFO" => Info(lines),
                     "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
