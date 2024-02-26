@@ -104,7 +104,7 @@ public partial class RedisServer
         {
             if (lines[4].ToUpperInvariant() == "REPLICATION")
             {
-                return "role:master".AsBulkString();
+                return $"role:{_config[RedisConfigKeys.Role]}".AsBulkString();
             }
         }
         return "$-1\r\n";
