@@ -17,9 +17,14 @@ public partial class RedisServer
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
     private RedisDatabase? _database { get; set; }
 
+    private int Port => _config.TryGetValue(RedisConfigKeys.Port, out var stringPort) && int.TryParse(stringPort, out var port)
+        ? port
+        : 6379;
+
     public RedisServer(Dictionary<string, string> config)
     {
         _config = config;
+        _server = new(IPAddress.Any, Port);
     }
 
     public async Task Start()
@@ -42,6 +47,7 @@ public partial class RedisServer
             }
         }
         _server.Start();
+        Console.WriteLine($"Listing on {_server.LocalEndpoint}");
         int socketNumber = 0;
         while (true)
         {

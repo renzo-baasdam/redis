@@ -7,6 +7,7 @@ public static class Program
         var config = new Dictionary<string, string>();
         for (int i = 0; i < args.Length; i += 2)
         {
+            if (args[i] == RedisConfigKeys.Port.AsArgumentString()) config[RedisConfigKeys.Port] = args[i + 1];
             if (args[i] == RedisConfigKeys.Directory.AsArgumentString()) config[RedisConfigKeys.Directory] = args[i + 1];
             if (args[i] == RedisConfigKeys.Filename.AsArgumentString()) config[RedisConfigKeys.Filename] = args[i + 1];
         }

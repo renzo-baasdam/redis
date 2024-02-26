@@ -2,7 +2,7 @@
   "profiles": {
     "redis-with": {
       "commandName": "Project",
-      "commandLineArgs": "--dir /Users/renzo/source/repos/redis --dbfilename dump.rdb"
+      "commandLineArgs": "--dir /Users/renzo/source/repos/redis --dbfilename dump.rdb --port 7000"
     },
     "redis-without": {
       "commandName": "Project"
