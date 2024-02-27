@@ -105,12 +105,12 @@ public partial class RedisServer
     {
         if (lines.Length > 4 && lines[4].ToUpperInvariant() == "REPLICATION")
         {
-            var list = new List<string>();
-            list.Add($"{RedisConfigKeys.Role}:{_config.Role}");
-            if (_config.MasterReplicationId is not null) list.Add($"{RedisConfigKeys.MasterReplicationId}:{_config.MasterReplicationId}");
-            list.Add($"{RedisConfigKeys.MasterReplicationOffset}:{_config.MasterReplicationOffset}");
+            var sb = new StringBuilder();
+            sb.AppendLine($"{RedisConfigKeys.Role}:{_config.Role}");
+            if (_config.MasterReplicationId is not null) sb.AppendLine($"{RedisConfigKeys.MasterReplicationId}:{_config.MasterReplicationId}");
+            sb.AppendLine($"{RedisConfigKeys.MasterReplicationOffset}:{_config.MasterReplicationOffset}");
 
-            return list.ToArray().AsBulkString();
+            return sb.ToString().AsBulkString();
 
         }
         return "$-1\r\n";
