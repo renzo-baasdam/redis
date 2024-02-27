@@ -92,6 +92,14 @@ public partial class RedisServer
 
             Console.WriteLine("Sending second REPLCONF to master");
             await stream.WriteAsync(data, 0, data.Length);
+
+            // send PSYNC ? -1
+            stream = client.GetStream();
+            message = new string[] { "PSYNC", "?", "-1" }.AsBulkString();
+            data = Encoding.ASCII.GetBytes(message);
+
+            Console.WriteLine("Sending second PSYNC to master");
+            await stream.WriteAsync(data, 0, data.Length);
         }
         catch
         {
