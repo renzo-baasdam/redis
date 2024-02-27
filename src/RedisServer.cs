@@ -43,6 +43,10 @@ public partial class RedisServer
                 Console.WriteLine($"Error loading database: {ex.Message}");
             }
         }
+        if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
+        {
+            Connect(masterPort);
+        }
         _server.Start();
         Console.WriteLine($"Listing on {_server.LocalEndpoint}");
         int socketNumber = 0;
@@ -52,6 +56,29 @@ public partial class RedisServer
             Console.WriteLine($"Accepted Socket #{socketNumber}");
             Listen(socket, socketNumber);
             ++socketNumber;
+        }
+    }
+
+    private async void Connect(int masterPort)
+    {
+        try
+        {
+            var ipAddress = Dns.GetHostEntry("localhost").AddressList[0];
+            var endpoint = new IPEndPoint(ipAddress, masterPort);
+            using var client = new TcpClient();
+
+            await client.ConnectAsync(endpoint);
+
+            var stream = client.GetStream();
+            string message = new string[] { "PING" }.AsBulkString();
+            byte[] data = Encoding.ASCII.GetBytes(message);
+            stream.Write(data, 0, data.Length);
+
+            Console.WriteLine("Sent PING to master");
+        }
+        catch
+        {
+
         }
     }
 
