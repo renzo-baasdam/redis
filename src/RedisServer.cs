@@ -69,12 +69,29 @@ public partial class RedisServer
 
             await client.ConnectAsync(endpoint);
 
+            // send ping
             var stream = client.GetStream();
             string message = new string[] { "PING" }.AsBulkString();
             byte[] data = Encoding.ASCII.GetBytes(message);
-            stream.Write(data, 0, data.Length);
 
-            Console.WriteLine("Sent PING to master");
+            Console.WriteLine("Sending PING to master");
+            await stream.WriteAsync(data, 0, data.Length);
+
+            // send REPLCONF listening-port <port>
+            stream = client.GetStream();
+            message = new string[] { "REPLCONF", "listening-port", _config.Port.ToString() }.AsBulkString();
+            data = Encoding.ASCII.GetBytes(message);
+
+            Console.WriteLine("Sending first REPLCONF to master");
+            await stream.WriteAsync(data, 0, data.Length);
+
+            // send REPLCONF capa psync2
+            stream = client.GetStream();
+            message = new string[] { "REPLCONF", "capa", "psync2" }.AsBulkString();
+            data = Encoding.ASCII.GetBytes(message);
+
+            Console.WriteLine("Sending second REPLCONF to master");
+            await stream.WriteAsync(data, 0, data.Length);
         }
         catch
         {
