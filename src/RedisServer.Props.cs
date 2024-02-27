@@ -6,7 +6,7 @@ public partial class RedisServer
     {
         get
         {
-            if (_config.TryGetValue(RedisConfigKeys.Directory, out var dir) && _config.TryGetValue(RedisConfigKeys.Filename, out var filename))
+            if (_config.Directory is { } dir && _config.Filename is { } filename)
             {
                 return $"{dir}/{filename}";
             }

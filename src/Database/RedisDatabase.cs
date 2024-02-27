@@ -34,7 +34,7 @@ internal partial class RedisDatabase
                 {
                     var timeAsInt = BitConverter.ToInt32(bytes, ++index);
                     index += 4;
-                    expiration =  DateTimeOffset.FromUnixTimeSeconds(timeAsInt).UtcDateTime;
+                    expiration = DateTimeOffset.FromUnixTimeSeconds(timeAsInt).UtcDateTime;
                 }
                 if (bytes[index] == (byte)0xFC)
                 {

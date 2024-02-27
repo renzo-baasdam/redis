@@ -1,4 +1,5 @@
 using Redis.Database;
+using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -13,18 +14,14 @@ internal record RedisValue
 public partial class RedisServer
 {
     private readonly Dictionary<string, RedisValue> _cache = new();
-    private readonly Dictionary<string, string> _config = new();
+    private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
     private RedisDatabase? _database { get; set; }
 
-    private int Port => _config.TryGetValue(RedisConfigKeys.Port, out var stringPort) && int.TryParse(stringPort, out var port)
-        ? port
-        : 6379;
-
-    public RedisServer(Dictionary<string, string> config)
+    public RedisServer(RedisConfig config)
     {
         _config = config;
-        _server = new(IPAddress.Any, Port);
+        _server = new(IPAddress.Any, _config.Port);
     }
 
     public async Task Start()
@@ -92,20 +89,29 @@ public partial class RedisServer
     {
         if (lines[4].ToUpperInvariant() == "GET")
         {
-            if (_config.TryGetValue(lines[6], out var value))
-                return new string[] { lines[6], value }.AsBulkString();
+            var arg = lines[6];
+            var fetched = arg switch
+            {
+                RedisConfigKeys.Filename => _config.Filename,
+                RedisConfigKeys.Directory => _config.Directory,
+                _ => null
+            };
+            if (fetched is not null) return new string[] { lines[6], fetched }.AsBulkString();
         }
         return "$-1\r\n";
     }
 
     private string Info(string[] lines)
     {
-        if( lines.Length > 4)
+        if (lines.Length > 4 && lines[4].ToUpperInvariant() == "REPLICATION")
         {
-            if (lines[4].ToUpperInvariant() == "REPLICATION")
-            {
-                return $"role:{_config[RedisConfigKeys.Role]}".AsBulkString();
-            }
+            var list = new List<string>();
+            list.Add($"{RedisConfigKeys.Role}:{_config.Role}");
+            if (_config.MasterReplicationId is not null) list.Add($"{RedisConfigKeys.MasterReplicationId}:{_config.MasterReplicationId}");
+            list.Add($"{RedisConfigKeys.MasterReplicationOffset}:{_config.MasterReplicationOffset}");
+
+            return list.ToArray().AsBulkString();
+
         }
         return "$-1\r\n";
     }
