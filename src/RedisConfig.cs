@@ -7,7 +7,7 @@ public class RedisConfig
     public int? MasterPort { get; set; }
     public string? MasterReplicationId { get; set; }
     public int MasterReplicationOffset { get; set; }
-    public int Port { get; set; } = 7000;
+    public int Port { get; set; } = 6379;
     public string? Directory { get; set; }
     public string? Filename { get; set; }
 }
