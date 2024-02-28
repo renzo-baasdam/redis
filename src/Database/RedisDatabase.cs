@@ -22,8 +22,8 @@ internal partial class RedisDatabase
             var databaseNumber = bytes[++index];
             if (bytes[++index] != 0xFB) throw new InvalidDataException("Expected 0xFB, the Resizedb information.");
             ++index;
-            var databaseHashTableSize = DecodeLength(ref index, bytes);
-            var expiryHashTableSize = DecodeLength(ref index, bytes);
+            (var databaseHashTableSize, index) = DecodeLength(index, bytes);
+            (var expiryHashTableSize, index) = DecodeLength(index, bytes);
             var db = new Database(databaseNumber, databaseHashTableSize, expiryHashTableSize);
 
             while (HasNextKeyValue(bytes[index]))
@@ -76,39 +76,29 @@ internal partial class RedisDatabase
 
     internal static string DecodeLengthPrefixedString(ref int index, byte[] bytes)
     {
-        var length = DecodeLength(ref index, bytes);
+        (var length, index) = DecodeLength(index, bytes);
         var decoded = Encoding.UTF8.GetString(bytes, index, (int)length);
         index += (int)length;
         return decoded;
     }
 
-    internal static uint DecodeLength(ref int index, byte[] bytes)
+    internal static (uint length, int index) DecodeLength(int index, byte[] bytes)
     {
-        int i = index;
-        var encodingType = (uint)bytes[i] >> 6;
-        if (encodingType == 0b00)
+        return (bytes[index] >> 6) switch
         {
-            index += 1;
-            return bytes[i];
-        }
-        if (encodingType == 0b01)
-        {
-            index += 2;
-            return (((uint)(bytes[i] & 0b11_1111) << 8) | bytes[i + 1]);
-        }
-        if (encodingType == 0b10)
-        {
-            index += 5;
-            return (uint)
-                 ((bytes[i + 1] << 24)
-                + (bytes[i + 2] << 16)
-                + (bytes[i + 3] << 08)
-                + (bytes[i + 4] << 00));
-        }
-        if (encodingType == 0b11)
-        {
-            throw new NotSupportedException("Length encoding starts with 11, indicating special format, which is currently not supported.");
-        }
-        throw new InvalidDataException("Reached a part of the code that should not be reachable.");
+            0b00 => (bytes[index], index + 1),
+            0b01 => (Length2(bytes, index), index + 2),
+            0b10 => (Length5(bytes, index), index + 5),
+            0b11 => throw new NotSupportedException("Length encoding starts with 11, indicating special format, which is currently not supported."),
+            _ => throw new InvalidDataException("Reached a part of the code that should not be reachable.")
+        };
+
+        static uint Length2(byte[] bytes, int i) => (((uint)(bytes[i] & 0b11_1111) << 8) | bytes[i + 1]);
+
+        static uint Length5(byte[] bytes, int i) => (uint)(0
+            | (bytes[i + 1] << 24)
+            | (bytes[i + 2] << 16)
+            | (bytes[i + 3] << 08)
+            | (bytes[i + 4] << 00));
     }
 }

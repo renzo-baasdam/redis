@@ -5,7 +5,6 @@ namespace Redis.Tests;
 
 public class Length_decoder
 {
-    [Theory]
     [TestCase((uint)0x0)]
     [TestCase((uint)0x1)]
     [TestCase((uint)0x2)]
@@ -16,12 +15,9 @@ public class Length_decoder
         uint header = 0b0000_0000;
         var first = (byte)(value & 0b11_1111 | header);
         var encoded = new byte[] { first };
-        var decoded = RedisDatabase.DecodeLength(ref index, encoded);
-        decoded.Should().Be(value);
-        index.Should().Be(1);
+        RedisDatabase.DecodeLength(index, encoded).Should().Be((value, 1));
     }
 
-    [Theory]
     [TestCase((uint)0x0)]
     [TestCase((uint)0x1)]
     [TestCase((uint)0x2)]
@@ -33,12 +29,9 @@ public class Length_decoder
         var first = (byte)((value >> 8) & 0b11_1111 | header);
         var second = (byte)value;
         var encoded = new byte[] { first, second };
-        var decoded = RedisDatabase.DecodeLength(ref index, encoded);
-        decoded.Should().Be(value);
-        index.Should().Be(2);
+        RedisDatabase.DecodeLength(index, encoded).Should().Be((value, 2));
     }
 
-    [Theory]
     [TestCase((uint)0x0)]
     [TestCase((uint)0x1)]
     [TestCase((uint)0x2)]
@@ -54,8 +47,6 @@ public class Length_decoder
             (byte)(value >> 08 & 0b1111_1111),
             (byte)(value >> 00 & 0b1111_1111),
         };
-        var decoded = RedisDatabase.DecodeLength(ref index, encoded);
-        decoded.Should().Be(value);
-        index.Should().Be(5);
+        RedisDatabase.DecodeLength(index, encoded).Should().Be((value, 5));
     }
 }
