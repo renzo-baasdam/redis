@@ -161,6 +161,13 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
+    private string PSync(string[] lines)
+    {
+        if(lines.Length > 6 && lines[4] == "?" && lines[6] == "-1") 
+            return $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
+        return "$-1\r\n";
+    }
+
     private string Info(string[] lines)
     {
         if (lines.Length > 4 && lines[4].ToUpperInvariant() == "REPLICATION")
@@ -228,6 +235,7 @@ public partial class RedisServer
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
                     "REPLCONF" => ReplConf(lines),
+                    "PSYNC" => PSync(lines),
                     "INFO" => Info(lines),
                     "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),
