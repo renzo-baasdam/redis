@@ -153,6 +153,14 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
+    private string ReplConf(string[] lines)
+    {
+        var first = lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var _);
+        var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "eof" && lines[8] == "capa" && lines[10] == "psync2";
+        if (first || second) return "+OK\r\n";
+        return "$-1\r\n";
+    }
+
     private string Info(string[] lines)
     {
         if (lines.Length > 4 && lines[4].ToUpperInvariant() == "REPLICATION")
@@ -219,6 +227,7 @@ public partial class RedisServer
                     "SET" => Set(lines),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
+                    "REPLCONF" => ReplConf(lines),
                     "INFO" => Info(lines),
                     "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),
@@ -229,5 +238,4 @@ public partial class RedisServer
         }
         return "Unsupported request\r\n";
     }
-
 }
