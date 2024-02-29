@@ -140,7 +140,6 @@ public partial class RedisServer
                     }
                 }
             }
-            catch (SocketException) { }
             catch (Exception ex)
             {
                 Console.WriteLine($"Caught exception: {ex.Message}");
