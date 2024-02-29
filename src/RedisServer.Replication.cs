@@ -10,7 +10,9 @@ public partial class RedisServer
     {
         foreach(var port in _replicates)
         {
-            var ipAddress = Dns.GetHostEntry("localhost").AddressList[1];
+            var ipAddress = Dns.GetHostEntry("localhost").AddressList
+                .Where(x => x.AddressFamily == AddressFamily.InterNetwork)
+                .First();
             var endpoint = new IPEndPoint(ipAddress, port);
             using var client = new TcpClient();
 
