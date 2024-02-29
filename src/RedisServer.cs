@@ -117,22 +117,30 @@ public partial class RedisServer
             try
             {
                 // receive
-                var buffer = new byte[512];
+                var buffer = new byte[1024];
                 await socket.ReceiveAsync(buffer, SocketFlags.None);
 
                 // input bytes to string
                 var bufferEnd = Array.IndexOf(buffer, (byte)0);
                 var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
 
-                // output string to bytes
-                foreach (var output in Response(input))
+                // possibly multiple commands in the buffer
+                var cmds = input
+                    .Split("*", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(str => "*" + str);
+                foreach (var cmd in cmds)
                 {
-                    // log and respond
-                    Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}."
-                        + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
-                    await socket.SendAsync(output, SocketFlags.None);
+                    // output string to bytes
+                    foreach (var output in Response(input))
+                    {
+                        // log and respond
+                        Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}."
+                            + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
+                        await socket.SendAsync(output, SocketFlags.None);
+                    }
                 }
             }
+            catch (SocketException) { }
             catch (Exception ex)
             {
                 Console.WriteLine($"Caught exception: {ex.Message}");
