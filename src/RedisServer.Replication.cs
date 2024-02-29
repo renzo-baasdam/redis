@@ -8,8 +8,10 @@ public partial class RedisServer
 {
     private async void Propagate(string cmd)
     {
-        foreach(var port in _replicates)
+        Console.WriteLine("Propagate");
+        foreach (var port in _replicates)
         {
+            Console.WriteLine($"To IP: {LocalhostIP}, Port: {port}, Cmd: {cmd}");
             var endpoint = new IPEndPoint(LocalhostIP, port);
             using var client = new TcpClient();
 
