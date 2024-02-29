@@ -10,10 +10,10 @@ public partial class RedisServer
     {
         foreach (var port in _replicates)
         {
+            using var client = new TcpClient();
             try
             {
                 var endpoint = new IPEndPoint(LocalhostIP, port);
-                using var client = new TcpClient();
 
                 await client.ConnectAsync(endpoint);
 
@@ -24,10 +24,16 @@ public partial class RedisServer
                 Console.WriteLine($"Sending cmd to replicate on port {port}.");
                 await stream.WriteAsync(data, 0, data.Length);
 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            finally
+            {
                 client.GetStream().Close();
                 client.Close();
             }
-            catch (Exception) { }
         }
     }
 

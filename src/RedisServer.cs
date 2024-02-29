@@ -62,10 +62,10 @@ public partial class RedisServer
 
     private async void Connect(int masterPort)
     {
+        using var client = new TcpClient();
         try
         {
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
-            using var client = new TcpClient();
 
             await client.ConnectAsync(endpoint);
 
@@ -107,6 +107,11 @@ public partial class RedisServer
         catch (Exception ex)
         {
             Console.WriteLine(ex);
+        }
+        finally
+        {
+            client.GetStream().Close();
+            client.Close();
         }
     }
 
