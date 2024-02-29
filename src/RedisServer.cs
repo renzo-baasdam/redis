@@ -131,10 +131,10 @@ public partial class RedisServer
                 foreach (var cmd in cmds)
                 {
                     // output string to bytes
-                    foreach (var output in Response(input))
+                    foreach (var output in Response(cmd))
                     {
                         // log and respond
-                        Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}."
+                        Console.WriteLine(@$"Socket #{socketNumber}. Received: {cmd.ReplaceLineEndings("\\r\\n")}."
                             + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
                         await socket.SendAsync(output, SocketFlags.None);
                     }
