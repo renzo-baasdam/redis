@@ -169,7 +169,7 @@ public partial class RedisServer
         if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
         {
             var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
-            var rdbResponse = $"${bytes.Length}\r\n{file}";
+            var rdbResponse = $"${file.Length}\r\n{file}";
             return new string[] { initialResponse, rdbResponse };
         }
         return new string[] { "$-1\r\n" };
