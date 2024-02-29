@@ -1,7 +1,14 @@
-*2
+*3
 $4
 SET
 $11
-key
+key1
 $12
-value
+value2
+*3
+$4
+SET
+$11
+key2
+$12
+value2

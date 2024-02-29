@@ -8,21 +8,26 @@ public partial class RedisServer
 {
     private async void Propagate(string cmd)
     {
-        Console.WriteLine("Propagate");
         foreach (var port in _replicates)
         {
-            Console.WriteLine($"To IP: {LocalhostIP}, Port: {port}, Cmd: {cmd}");
-            var endpoint = new IPEndPoint(LocalhostIP, port);
-            using var client = new TcpClient();
+            try
+            {
+                var endpoint = new IPEndPoint(LocalhostIP, port);
+                using var client = new TcpClient();
 
-            await client.ConnectAsync(endpoint);
+                await client.ConnectAsync(endpoint);
 
-            // send ping
-            var stream = client.GetStream();
-            byte[] data = Encoding.ASCII.GetBytes(cmd);
+                // send ping
+                var stream = client.GetStream();
+                byte[] data = Encoding.ASCII.GetBytes(cmd);
 
-            Console.WriteLine($"Sending cmd to replicate on port {port}.");
-            await stream.WriteAsync(data, 0, data.Length);
+                Console.WriteLine($"Sending cmd to replicate on port {port}.");
+                await stream.WriteAsync(data, 0, data.Length);
+
+                client.GetStream().Close();
+                client.Close();
+            }
+            catch (Exception) { }
         }
     }
 
