@@ -164,7 +164,9 @@ public partial class RedisServer
 
     private string[] PSync(string[] lines)
     {
-        var file = BitConverter.ToString(Convert.FromBase64String(RedisConfig.EmptyRdb)).Replace("-", string.Empty);
+        var file = BitConverter.ToString(Convert.FromBase64String(RedisConfig.EmptyRdb))
+            .Replace("-", string.Empty)
+            .ToLowerInvariant();
         if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
         {
             var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
