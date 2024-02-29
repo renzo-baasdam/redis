@@ -10,7 +10,7 @@ public partial class RedisServer
     {
         foreach(var port in _replicates)
         {
-            var ipAddress = Dns.GetHostEntry("localhost").AddressList[0];
+            var ipAddress = Dns.GetHostEntry("localhost").AddressList[1];
             var endpoint = new IPEndPoint(ipAddress, port);
             using var client = new TcpClient();
 
@@ -18,10 +18,9 @@ public partial class RedisServer
 
             // send ping
             var stream = client.GetStream();
-            string message = cmd.AsBulkString();
-            byte[] data = Encoding.ASCII.GetBytes(message);
+            byte[] data = Encoding.ASCII.GetBytes(cmd);
 
-            Console.WriteLine($"Sending cmd: {String.Join(" ", cmd)} to replicate on port {port}.");
+            Console.WriteLine($"Sending cmd to replicate on port {port}.");
             await stream.WriteAsync(data, 0, data.Length);
         }
     }

@@ -1,11 +1,12 @@
 {
   "profiles": {
-    "redis-with": {
+    "redis-host": {
       "commandName": "Project",
-      "commandLineArgs": "--dir /Users/renzo/source/repos/redis --dbfilename dump.rdb --port 7001 --replicaof localhost 7000"
+      "commandLineArgs": "--port 7000 --dir /Users/renzo/source/repos/redis --dbfilename dump.rdb"
     },
-    "redis-without": {
-      "commandName": "Project"
+    "redis-replicate": {
+      "commandName": "Project",
+      "commandLineArgs": " --port 7001 --replicaof localhost 7000 --dir /Users/renzo/source/repos/redis --dbfilename dump.rdb"
     }
   }
 }

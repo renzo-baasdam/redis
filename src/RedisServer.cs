@@ -64,7 +64,7 @@ public partial class RedisServer
     {
         try
         {
-            var ipAddress = Dns.GetHostEntry("localhost").AddressList[0];
+            var ipAddress = Dns.GetHostEntry("localhost").AddressList[1];
             var endpoint = new IPEndPoint(ipAddress, masterPort);
             using var client = new TcpClient();
 
@@ -74,35 +74,41 @@ public partial class RedisServer
             var stream = client.GetStream();
             string message = new string[] { "PING" }.AsBulkString();
             byte[] data = Encoding.ASCII.GetBytes(message);
-
             Console.WriteLine("Sending PING to master");
             await stream.WriteAsync(data, 0, data.Length);
+            await stream.ReadAsync(new byte[512]);
 
             // send REPLCONF listening-port <port>
             stream = client.GetStream();
             message = new string[] { "REPLCONF", "listening-port", _config.Port.ToString() }.AsBulkString();
             data = Encoding.ASCII.GetBytes(message);
-
             Console.WriteLine("Sending first REPLCONF to master");
             await stream.WriteAsync(data, 0, data.Length);
+            await stream.ReadAsync(new byte[512]);
 
             // send REPLCONF capa psync2
             stream = client.GetStream();
             message = new string[] { "REPLCONF", "capa", "psync2" }.AsBulkString();
             data = Encoding.ASCII.GetBytes(message);
-
             Console.WriteLine("Sending second REPLCONF to master");
             await stream.WriteAsync(data, 0, data.Length);
+            await stream.ReadAsync(new byte[512]);
 
             // send PSYNC ? -1
             stream = client.GetStream();
             message = new string[] { "PSYNC", "?", "-1" }.AsBulkString();
             data = Encoding.ASCII.GetBytes(message);
-
             Console.WriteLine("Sending second PSYNC to master");
             await stream.WriteAsync(data, 0, data.Length);
+            await stream.ReadAsync(new byte[512]);
+
+            client.GetStream().Close();
+            client.Close();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
     }
 
     async void Listen(Socket socket, int socketNumber)
