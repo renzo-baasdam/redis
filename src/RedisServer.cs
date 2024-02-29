@@ -100,9 +100,6 @@ public partial class RedisServer
             Console.WriteLine("Sending second PSYNC to master");
             await stream.WriteAsync(data, 0, data.Length);
             await stream.ReadAsync(new byte[512]);
-
-            client.GetStream().Close();
-            client.Close();
         }
         catch (Exception ex)
         {
