@@ -124,11 +124,10 @@ public partial class RedisServer
                 // output string to bytes
                 foreach (var output in Response(input))
                 {
-                    var outputBuffer = Encoding.UTF8.GetBytes(output);
                     // log and respond
-                    Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}. Response: {output.Replace("\r\n", "\\r\\n")}");
-                    Console.WriteLine($"Buffer: {Encoding.UTF8.GetString(outputBuffer)}");
-                    await socket.SendAsync(outputBuffer, SocketFlags.None);
+                    Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}."
+                        + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
+                    await socket.SendAsync(output, SocketFlags.None);
                 }
             }
             catch (Exception ex)
@@ -163,17 +162,16 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
-    private string[] PSync(string[] lines)
+    private byte[][] PSync(string[] lines)
     {
         var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
-        var file = Encoding.UTF8.GetString(bytes);
         if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
         {
-            var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
-            var rdbResponse = $"${file.Length}\r\n{file}";
-            return new string[] { initialResponse, rdbResponse };
+            var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n".AsUtf8();
+            var rdbResponse = $"${bytes.Length}\r\n".AsUtf8().Concat(bytes).ToArray();
+            return new byte[][] { initialResponse, rdbResponse };
         }
-        return new string[] { "$-1\r\n" };
+        return new byte[][] { "$-1\r\n".AsUtf8() };
     }
 
     private string Info(string[] lines)
@@ -226,7 +224,7 @@ public partial class RedisServer
         return "+OK\r\n";
     }
 
-    private IEnumerable<string> Response(string input)
+    private IEnumerable<byte[]> Response(string input)
     {
         var lines = input.Split("\r\n");
         if (lines.Length > 0)
@@ -250,9 +248,9 @@ public partial class RedisServer
                     "PING" => "+PONG\r\n",
                     _ => "Unsupported request\r\n"
                 };
-                return new string[] { response };
+                return new byte[][] { response.AsUtf8()};
             }
         }
-        return new string[] { "Unsupported request\r\n" };
+        return new byte[][] { "+Unsupported request\r\n".AsUtf8() };
     }
 }
