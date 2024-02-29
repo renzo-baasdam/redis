@@ -64,8 +64,7 @@ public partial class RedisServer
     {
         try
         {
-            var ipAddress = Dns.GetHostEntry("localhost").AddressList[1];
-            var endpoint = new IPEndPoint(ipAddress, masterPort);
+            var endpoint = new IPEndPoint(LocalhostIP, masterPort);
             using var client = new TcpClient();
 
             await client.ConnectAsync(endpoint);

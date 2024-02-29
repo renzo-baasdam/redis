@@ -8,14 +8,9 @@ public partial class RedisServer
 {
     private async void Propagate(string cmd)
     {
-        Console.WriteLine("Propagating");
         foreach(var port in _replicates)
         {
-            Console.WriteLine($"Port: {port}, dns count: {Dns.GetHostEntry("localhost").AddressList.Length}");
-            var ipAddress = Dns.GetHostEntry("localhost").AddressList
-                .Where(x => x.AddressFamily == AddressFamily.InterNetwork)
-                .First();
-            var endpoint = new IPEndPoint(ipAddress, port);
+            var endpoint = new IPEndPoint(LocalhostIP, port);
             using var client = new TcpClient();
 
             await client.ConnectAsync(endpoint);
