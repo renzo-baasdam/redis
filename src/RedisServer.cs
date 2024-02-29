@@ -16,6 +16,7 @@ public partial class RedisServer
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
+    private readonly List<int> _replicates = new();
     private RedisDatabase? _database { get; set; }
 
     public RedisServer(RedisConfig config)
@@ -101,10 +102,7 @@ public partial class RedisServer
             Console.WriteLine("Sending second PSYNC to master");
             await stream.WriteAsync(data, 0, data.Length);
         }
-        catch
-        {
-
-        }
+        catch { }
     }
 
     async void Listen(Socket socket, int socketNumber)
@@ -154,26 +152,6 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
-    private string ReplConf(string[] lines)
-    {
-        var first = lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var _);
-        var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "eof" && lines[8] == "capa" && lines[10] == "psync2";
-        if (first || second) return "+OK\r\n";
-        return "$-1\r\n";
-    }
-
-    private byte[][] PSync(string[] lines)
-    {
-        var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
-        if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
-        {
-            var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n".AsUtf8();
-            var rdbResponse = $"${bytes.Length}\r\n".AsUtf8().Concat(bytes).ToArray();
-            return new byte[][] { initialResponse, rdbResponse };
-        }
-        return new byte[][] { "$-1\r\n".AsUtf8() };
-    }
-
     private string Info(string[] lines)
     {
         if (lines.Length > 4 && lines[4].ToUpperInvariant() == "REPLICATION")
@@ -205,7 +183,7 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
-    private string Set(string[] lines)
+    private string Set(string[] lines, string input)
     {
         var key = lines[4];
         var value = lines[6];
@@ -221,6 +199,7 @@ public partial class RedisServer
         {
             _cache[key] = new RedisValue() { Value = value };
         }
+        Propagate(input);
         return "+OK\r\n";
     }
 
@@ -238,7 +217,7 @@ public partial class RedisServer
                 if (command == "PSYNC") return PSync(lines);
                 var response = command switch
                 {
-                    "SET" => Set(lines),
+                    "SET" => Set(lines, input),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
                     "REPLCONF" => ReplConf(lines),
@@ -248,7 +227,7 @@ public partial class RedisServer
                     "PING" => "+PONG\r\n",
                     _ => "Unsupported request\r\n"
                 };
-                return new byte[][] { response.AsUtf8()};
+                return new byte[][] { response.AsUtf8() };
             }
         }
         return new byte[][] { "+Unsupported request\r\n".AsUtf8() };
