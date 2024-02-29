@@ -13,6 +13,7 @@ public partial class RedisServer
             using var client = new TcpClient();
             try
             {
+                Console.WriteLine($"Connecting to port: {port}");
                 var endpoint = new IPEndPoint(LocalhostIP, port);
 
                 await client.ConnectAsync(endpoint);
@@ -23,7 +24,7 @@ public partial class RedisServer
 
                 Console.WriteLine($"Sending cmd to replicate on port {port}.");
                 await stream.WriteAsync(data, 0, data.Length);
-
+                Console.WriteLine($"Done writing to port.");
             }
             catch (Exception ex)
             {
