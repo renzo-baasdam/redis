@@ -13,7 +13,7 @@ public partial class RedisServer
             using var client = new TcpClient();
             try
             {
-                Console.WriteLine($"Connecting to port: {port}");
+                Console.WriteLine($"Connecting to port: {port}, ip: {LocalhostIP}");
                 var endpoint = new IPEndPoint(LocalhostIP, port);
 
                 await client.ConnectAsync(endpoint);
