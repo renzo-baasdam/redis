@@ -1,5 +1,7 @@
 *2
 $4
-info
+PSYNC
 $11
-replication
+?
+$12
+-1

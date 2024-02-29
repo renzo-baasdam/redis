@@ -164,13 +164,12 @@ public partial class RedisServer
 
     private string[] PSync(string[] lines)
     {
-        var file = BitConverter.ToString(Convert.FromBase64String(RedisConfig.EmptyRdb))
-            .Replace("-", string.Empty)
-            .ToLowerInvariant();
+        var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
+        var file = Encoding.UTF8.GetString(bytes);
         if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
         {
             var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
-            var rdbResponse = $"${file.Length}\r\n{file}";
+            var rdbResponse = $"${bytes.Length}\r\n{file}";
             return new string[] { initialResponse, rdbResponse };
         }
         return new string[] { "$-1\r\n" };
