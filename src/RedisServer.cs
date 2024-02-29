@@ -127,6 +127,7 @@ public partial class RedisServer
                     var outputBuffer = Encoding.UTF8.GetBytes(output);
                     // log and respond
                     Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}. Response: {output.Replace("\r\n", "\\r\\n")}");
+                    Console.WriteLine($"Buffer: {Encoding.UTF8.GetString(outputBuffer)}");
                     await socket.SendAsync(outputBuffer, SocketFlags.None);
                 }
             }
