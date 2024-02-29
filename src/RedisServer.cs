@@ -122,12 +122,13 @@ public partial class RedisServer
                 var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
 
                 // output string to bytes
-                var output = Response(input);
-                var outputBuffer = Encoding.UTF8.GetBytes(output);
-
-                // log and respond
-                Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}. Response: {output.Replace("\r\n", "\\r\\n")}");
-                await socket.SendAsync(outputBuffer, SocketFlags.None);
+                foreach (var output in Response(input))
+                {
+                    var outputBuffer = Encoding.UTF8.GetBytes(output);
+                    // log and respond
+                    Console.WriteLine(@$"Socket #{socketNumber}. Received: {input.ReplaceLineEndings("\\r\\n")}. Response: {output.Replace("\r\n", "\\r\\n")}");
+                    await socket.SendAsync(outputBuffer, SocketFlags.None);
+                }
             }
             catch (Exception ex)
             {
@@ -161,11 +162,16 @@ public partial class RedisServer
         return "$-1\r\n";
     }
 
-    private string PSync(string[] lines)
+    private string[] PSync(string[] lines)
     {
-        if(lines.Length > 6 && lines[4] == "?" && lines[6] == "-1") 
-            return $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
-        return "$-1\r\n";
+        var file = BitConverter.ToString(Convert.FromBase64String(RedisConfig.EmptyRdb));
+        if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
+        {
+            var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n";
+            var rdbResponse = $"${file.Length}\r\n{file}";
+            return new string[] { initialResponse, rdbResponse };
+        }
+        return new string[] { "$-1\r\n" };
     }
 
     private string Info(string[] lines)
@@ -218,7 +224,7 @@ public partial class RedisServer
         return "+OK\r\n";
     }
 
-    private string Response(string input)
+    private IEnumerable<string> Response(string input)
     {
         var lines = input.Split("\r\n");
         if (lines.Length > 0)
@@ -228,22 +234,23 @@ public partial class RedisServer
                 && arguments[0] == '*'
                 && int.TryParse(arguments[1..], out var numberOfArguments))
             {
-                var command = lines[2];
-                return command.ToUpperInvariant() switch
+                var command = lines[2].ToUpperInvariant();
+                if (command == "PSYNC") return PSync(lines);
+                var response = command switch
                 {
                     "SET" => Set(lines),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
                     "REPLCONF" => ReplConf(lines),
-                    "PSYNC" => PSync(lines),
                     "INFO" => Info(lines),
                     "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
                     _ => "Unsupported request\r\n"
                 };
+                return new string[] { response };
             }
         }
-        return "Unsupported request\r\n";
+        return new string[] { "Unsupported request\r\n" };
     }
 }

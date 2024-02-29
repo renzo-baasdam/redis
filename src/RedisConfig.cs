@@ -2,6 +2,8 @@ namespace Redis;
 
 public class RedisConfig
 {
+    public const string EmptyRdb = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==";
+
     public string Role { get; set; } = "master";
     public string? MasterHost { get; set; }
     public int? MasterPort { get; set; }
