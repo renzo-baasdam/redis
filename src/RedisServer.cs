@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis;
 using Redis.Database;
 using System.Data;
 using System.Net;
@@ -11,12 +12,12 @@ internal record RedisValue
     public DateTime? Expiration { get; init; }
 }
 
-public partial class RedisServer
+public partial class RedisServer : IDisposable
 {
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
-    private readonly List<int> _replicates = new();
+    private readonly List<ReplicateClient> _replicates = new();
     private RedisDatabase? _database { get; set; }
 
     public RedisServer(RedisConfig config)
@@ -50,69 +51,52 @@ public partial class RedisServer
         }
         _server.Start();
         Console.WriteLine($"Listing on {_server.LocalEndpoint}");
-        int socketNumber = 0;
+        int clientNumber = 0;
         while (true)
         {
-            var socket = await _server.AcceptSocketAsync();
-            Console.WriteLine($"Accepted Socket #{socketNumber}");
-            Listen(socket, socketNumber);
-            ++socketNumber;
+            var client = await _server.AcceptTcpClientAsync();
+            Console.WriteLine($"Established Tcp connection #{clientNumber}");
+            Listen(client, clientNumber);
+            ++clientNumber;
         }
     }
 
     private async void Connect(int masterPort)
     {
-        using var client = new TcpClient();
         try
         {
+            using var client = new TcpClient();
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
 
             await client.ConnectAsync(endpoint);
 
-            // send ping
-            var stream = client.GetStream();
-            string message = new string[] { "PING" }.AsBulkString();
-            byte[] data = Encoding.ASCII.GetBytes(message);
-            Console.WriteLine("Sending PING to master");
-            await stream.WriteAsync(data, 0, data.Length);
-            await stream.ReadAsync(new byte[512]);
-
-            // send REPLCONF listening-port <port>
-            stream = client.GetStream();
-            message = new string[] { "REPLCONF", "listening-port", _config.Port.ToString() }.AsBulkString();
-            data = Encoding.ASCII.GetBytes(message);
-            Console.WriteLine("Sending first REPLCONF to master");
-            await stream.WriteAsync(data, 0, data.Length);
-            await stream.ReadAsync(new byte[512]);
-
-            // send REPLCONF capa psync2
-            stream = client.GetStream();
-            message = new string[] { "REPLCONF", "capa", "psync2" }.AsBulkString();
-            data = Encoding.ASCII.GetBytes(message);
-            Console.WriteLine("Sending second REPLCONF to master");
-            await stream.WriteAsync(data, 0, data.Length);
-            await stream.ReadAsync(new byte[512]);
-
-            // send PSYNC ? -1
-            stream = client.GetStream();
-            message = new string[] { "PSYNC", "?", "-1" }.AsBulkString();
-            data = Encoding.ASCII.GetBytes(message);
-            Console.WriteLine("Sending second PSYNC to master");
-            await stream.WriteAsync(data, 0, data.Length);
-            await stream.ReadAsync(new byte[512]);
+            // handshake
+            await Send(client, new string[] { "PING" });
+            await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
+            await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
+            await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            Console.WriteLine(ex.Message);
         }
-        finally
+
+        async Task Send(TcpClient client, string[] msg, int responses = 1)
         {
-            client.GetStream().Close();
-            client.Close();
+            var stream = client.GetStream();
+            var data = msg.AsBulkString().AsUtf8();
+            Console.WriteLine($"Sending cmd: {string.Join(',', msg)} to master");
+            await stream.WriteAsync(data, 0, data.Length);
+            for (int i = 0; i < responses; ++i)
+            {
+                var response = new byte[512];
+                await stream.ReadAsync(response);
+                Console.WriteLine($"Response: {response.AsUtf8().ReplaceLineEndings("\\r\\n")}");
+            }
         }
     }
 
-    async void Listen(Socket socket, int socketNumber)
+    async void Listen(TcpClient client, int socketNumber)
     {
         while (true)
         {
@@ -120,7 +104,8 @@ public partial class RedisServer
             {
                 // receive
                 var buffer = new byte[1024];
-                await socket.ReceiveAsync(buffer, SocketFlags.None);
+                var stream = client.GetStream();
+                await stream.ReadAsync(buffer);
 
                 // input bytes to string
                 var bufferEnd = Array.IndexOf(buffer, (byte)0);
@@ -136,9 +121,9 @@ public partial class RedisServer
                     foreach (var output in Response(cmd))
                     {
                         // log and respond
-                        Console.WriteLine(@$"Socket #{socketNumber}. Received: {cmd.ReplaceLineEndings("\\r\\n")}."
+                        Console.WriteLine(@$"Client #{socketNumber}. Received: {cmd.ReplaceLineEndings("\\r\\n")}."
                             + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
-                        await socket.SendAsync(output, SocketFlags.None);
+                        await stream.WriteAsync(output);
                     }
                 }
             }
@@ -245,5 +230,13 @@ public partial class RedisServer
             }
         }
         return new byte[][] { "+Unsupported request\r\n".AsUtf8() };
+    }
+
+    public void Dispose()
+    {
+        foreach (var replicate in _replicates)
+        {
+            replicate.Dispose();
+        }
     }
 }

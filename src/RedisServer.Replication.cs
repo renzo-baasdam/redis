@@ -1,5 +1,3 @@
-using System.Net.Sockets;
-using System.Net;
 using System.Text;
 
 namespace Redis;
@@ -8,32 +6,24 @@ public partial class RedisServer
 {
     private async void Propagate(string cmd)
     {
-        foreach (var port in _replicates)
+        foreach (var client in _replicates)
         {
-            using var client = new TcpClient();
             try
             {
-                Console.WriteLine($"Connecting to port: {port}, ip: {LocalhostIP}");
-                var endpoint = new IPEndPoint(LocalhostIP, port);
-
-                await client.ConnectAsync(endpoint);
-
                 // send ping
+                await client.ConnectAsync();
                 var stream = client.GetStream();
-                byte[] data = Encoding.ASCII.GetBytes(cmd);
+                byte[] data = Encoding.UTF8.GetBytes(cmd);
 
-                Console.WriteLine($"Sending cmd to replicate on port {port}.");
+                Console.WriteLine($"Sending cmd to replicate on port {client.Port}.");
                 await stream.WriteAsync(data, 0, data.Length);
-                Console.WriteLine($"Done writing to port.");
+                var response = new byte[512];
+                await stream.ReadAsync(response);
+                Console.WriteLine($"Received response: {response.AsUtf8().ReplaceLineEndings("\\r\\n")}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-            }
-            finally
-            {
-                client.GetStream().Close();
-                client.Close();
+                Console.WriteLine(ex.Message);
             }
         }
     }
@@ -42,7 +32,7 @@ public partial class RedisServer
     {
         if (lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var port))
         {
-            _replicates.Add(port);
+            _replicates.Add(new ReplicateClient(LocalhostIP, port));
             return "+OK\r\n";
         }
         var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "eof" && lines[8] == "capa" && lines[10] == "psync2";

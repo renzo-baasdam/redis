@@ -4,9 +4,11 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
-        var conf = new RedisConfig();
-        conf.MasterReplicationId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
-        conf.MasterReplicationOffset = 0;
+        var conf = new RedisConfig
+        {
+            MasterReplicationId = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+            MasterReplicationOffset = 0
+        };
         for (int i = 0; i < args.Length; i += 2)
         {
             if (args[i] == RedisConfigKeys.Port.AsArgumentString()) conf.Port = int.Parse(args[i + 1]);
@@ -20,7 +22,15 @@ public static class Program
                 ++i;
             }
         }
+
         var server = new RedisServer(conf);
-        await server.Start();
+        try
+        {
+            await server.Start();
+        }
+        finally
+        {
+            server.Dispose();
+        }
     }
 }

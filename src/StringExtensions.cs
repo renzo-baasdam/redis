@@ -19,4 +19,5 @@ internal static class StringExtensions
     }
 
     internal static byte[] AsUtf8(this string str) => Encoding.UTF8.GetBytes(str);
+    internal static string AsUtf8(this byte[] data) => Encoding.UTF8.GetString(data);
 }
