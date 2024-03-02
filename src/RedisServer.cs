@@ -17,7 +17,7 @@ public partial class RedisServer : IDisposable
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
-    private readonly List<ReplicateClient> _replicates = new();
+    private readonly List<TcpClient> _replicates = new();
     private RedisDatabase? _database { get; set; }
 
     public RedisServer(RedisConfig config)
@@ -65,7 +65,7 @@ public partial class RedisServer : IDisposable
     {
         try
         {
-            using var client = new TcpClient();
+            var client = new TcpClient();
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
 
             await client.ConnectAsync(endpoint);
@@ -75,6 +75,8 @@ public partial class RedisServer : IDisposable
             await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
             await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
+
+            Listen(client, -1);
         }
         catch (Exception ex)
         {
@@ -118,7 +120,7 @@ public partial class RedisServer : IDisposable
                 foreach (var cmd in cmds)
                 {
                     // output string to bytes
-                    foreach (var output in Response(cmd))
+                    foreach (var output in Response(cmd, client))
                     {
                         // log and respond
                         Console.WriteLine(@$"Client #{socketNumber}. Received: {cmd.ReplaceLineEndings("\\r\\n")}."
@@ -202,7 +204,7 @@ public partial class RedisServer : IDisposable
         return "+OK\r\n";
     }
 
-    private IEnumerable<byte[]> Response(string input)
+    private IEnumerable<byte[]> Response(string input, TcpClient client)
     {
         var lines = input.Split("\r\n");
         if (lines.Length > 0)
@@ -219,7 +221,7 @@ public partial class RedisServer : IDisposable
                     "SET" => Set(lines, input),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
-                    "REPLCONF" => ReplConf(lines),
+                    "REPLCONF" => ReplConf(lines, client),
                     "INFO" => Info(lines),
                     "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),

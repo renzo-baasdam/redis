@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text;
 
 namespace Redis;
@@ -11,11 +12,10 @@ public partial class RedisServer
             try
             {
                 // send ping
-                await client.ConnectAsync();
                 var stream = client.GetStream();
                 byte[] data = Encoding.UTF8.GetBytes(cmd);
 
-                Console.WriteLine($"Sending cmd to replicate on port {client.Port}.");
+                Console.WriteLine($"Sending cmd to replicate.");
                 await stream.WriteAsync(data, 0, data.Length);
                 var response = new byte[512];
                 await stream.ReadAsync(response);
@@ -28,11 +28,11 @@ public partial class RedisServer
         }
     }
 
-    private string ReplConf(string[] lines)
+    private string ReplConf(string[] lines, TcpClient client)
     {
         if (lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var port))
         {
-            _replicates.Add(new ReplicateClient(LocalhostIP, port));
+            _replicates.Add(client);
             return "+OK\r\n";
         }
         var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "eof" && lines[8] == "capa" && lines[10] == "psync2";
