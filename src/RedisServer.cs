@@ -72,13 +72,14 @@ public partial class RedisServer : IDisposable
 
             await client.ConnectAsync(endpoint);
 
+            Master = client;
+            Listen(Master, -1);
+
             // handshake
             await Send(client, new string[] { "PING" });
             await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
             await Send(client, new string[] { "REPLCONF", "capa", "eof", "capa", "psync2" });
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
-            Master = client;
-            Listen(Master, -1);
         }
         catch (Exception ex)
         {
