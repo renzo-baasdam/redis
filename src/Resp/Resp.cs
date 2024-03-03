@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Redis;
 
 public class Message
@@ -37,6 +39,26 @@ public static class Resp
                     message.Arguments[j] = lines[index + (j + 1) * 2];
                 }
                 index = index + 2 * arguments + 1;
+                messages.Add(message);
+            }
+            else if (lines[index][0] == '+')
+            {
+                var message = new Response { Original = lines[index] + "\r\n" };
+                ++index;
+                messages.Add(message);
+            }
+            else if (lines[index][0] == '$')
+            {
+                var length = int.Parse(lines[index][1..]);
+                var sb = new StringBuilder();
+                sb.Append(lines[index] + "\r\n");
+                int headerLength = sb.Length;
+                ++index;
+                while(sb.Length - headerLength < length)
+                {
+                    sb.Append(lines[index++] + "\r\n");
+                }
+                var message = new Response { Original = sb.ToString() };
                 messages.Add(message);
             }
             else

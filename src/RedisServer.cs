@@ -91,12 +91,14 @@ public partial class RedisServer : IDisposable
             var data = msg.AsBulkString().AsUtf8();
             Console.WriteLine($"Sending cmd: {string.Join(',', msg)} to master");
             await stream.WriteAsync(data, 0, data.Length);
-            for (int i = 0; i < responses; ++i)
+            /*for (int i = 0; i < responses; ++i)
             {
                 var response = new byte[512];
                 await stream.ReadAsync(response);
+                response.AsUtf8();
+                stream.Position
                 Console.WriteLine($"Response: {response.AsUtf8().ReplaceLineEndings("\\r\\n")}");
-            }
+            }*/
         }
     }
 
