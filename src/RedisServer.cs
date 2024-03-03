@@ -75,7 +75,7 @@ public partial class RedisServer : IDisposable
             // handshake
             await Send(client, new string[] { "PING" });
             await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
-            await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
+            await Send(client, new string[] { "REPLCONF", "capa", "eof", "capa", "psync2" });
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
             Master = client;
             Listen(Master, -1);
@@ -91,14 +91,6 @@ public partial class RedisServer : IDisposable
             var data = msg.AsBulkString().AsUtf8();
             Console.WriteLine($"Sending cmd: {string.Join(',', msg)} to master");
             await stream.WriteAsync(data, 0, data.Length);
-            /*for (int i = 0; i < responses; ++i)
-            {
-                var response = new byte[512];
-                await stream.ReadAsync(response);
-                response.AsUtf8();
-                stream.Position
-                Console.WriteLine($"Response: {response.AsUtf8().ReplaceLineEndings("\\r\\n")}");
-            }*/
         }
     }
 

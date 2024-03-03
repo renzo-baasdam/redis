@@ -50,11 +50,16 @@ public static class Resp
             else if (lines[index][0] == '$')
             {
                 var length = int.Parse(lines[index][1..]);
+                if(length == -1)
+                {
+                    messages.Add(new Response { Original = lines[index++] + "\r\n" });
+                    continue;
+                }
                 var sb = new StringBuilder();
                 sb.Append(lines[index] + "\r\n");
                 int headerLength = sb.Length;
                 ++index;
-                while(sb.Length - headerLength < length)
+                while(sb.Length - headerLength < length && index < lines.Length)
                 {
                     sb.Append(lines[index++] + "\r\n");
                 }
