@@ -17,9 +17,6 @@ public partial class RedisServer
 
                 Console.WriteLine($"Propagating cmd to replicate.");
                 await stream.WriteAsync(data, 0, data.Length);
-                var response = new byte[512];
-                await stream.ReadAsync(response);
-                Console.WriteLine($"Propagation response: {response.AsUtf8().ReplaceLineEndings("\\r\\n")}");
             }
             catch (Exception ex)
             {
