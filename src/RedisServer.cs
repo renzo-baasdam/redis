@@ -113,18 +113,14 @@ public partial class RedisServer : IDisposable
                 var bufferEnd = Array.IndexOf(buffer, (byte)0);
                 var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
 
-                // possibly multiple commands in the buffer
-                /*var cmds = input
-                    .Split("*", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(str => "*" + str);*/
-
+                // parse input as RESP
                 var messages = Resp.Parse(input).ToArray();
                 foreach (var message in messages)
                 {
                     if (message is Command cmd)
                     {
                         // output string to bytes
-                        foreach (var output in Response(cmd.Original, client))
+                        foreach (var output in Response(cmd.Original, client, cmd))
                         {
                             // log and respond
                             Console.WriteLine(@$"Client #{socketNumber}. Command: {cmd.Original.ReplaceLineEndings("\\r\\n")}."
@@ -193,16 +189,16 @@ public partial class RedisServer : IDisposable
         return "$-1\r\n";
     }
 
-    private string Set(string[] lines, string input)
+    private string Set(string[] lines, string input, Command cmd)
     {
-        var key = lines[4];
-        var value = lines[6];
-        if (lines.Length > 8 && lines[8].ToUpperInvariant() == "PX")
+        var key = cmd[1];
+        var value = cmd[2];
+        if (cmd.Length > 4 && cmd[3].ToUpperInvariant() == "PX")
         {
             _cache[key] = new RedisValue()
             {
                 Value = value,
-                Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(lines[10]))
+                Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(cmd[4]))
             };
         }
         else
@@ -213,7 +209,7 @@ public partial class RedisServer : IDisposable
         return "+OK\r\n";
     }
 
-    private IEnumerable<byte[]> Response(string input, TcpClient client)
+    private IEnumerable<byte[]> Response(string input, TcpClient client, Command cmd)
     {
         var lines = input.Split("\r\n");
         if (lines.Length > 0)
@@ -227,7 +223,7 @@ public partial class RedisServer : IDisposable
                 if (command == "PSYNC") return PSync(lines);
                 var response = command switch
                 {
-                    "SET" => Set(lines, input),
+                    "SET" => Set(lines, input, cmd),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
                     "REPLCONF" => ReplConf(lines, client),

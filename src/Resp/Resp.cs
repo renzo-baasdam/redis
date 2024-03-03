@@ -7,6 +7,8 @@ public class Message
 public class Command : Message
 {
     public string[] Arguments { get; set; } = Array.Empty<string>();
+    public string this[int i] => Arguments[i];
+    public int Length => Arguments.Length;
 }
 public class Response : Message { }
 
@@ -28,7 +30,7 @@ public static class Resp
                 }
                 var message = new Command { 
                     Arguments = new string[arguments], 
-                    Original = input,
+                    Original = string.Join("\r\n", lines[index..(index + arguments * 2 + 1)]) + "\r\n",
                 };
                 for (int j = 0; j < arguments; ++j)
                 {

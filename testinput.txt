@@ -4,7 +4,7 @@ SET
 $11
 key1
 $12
-value2
+value1
 *3
 $4
 SET
