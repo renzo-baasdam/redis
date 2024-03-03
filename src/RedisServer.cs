@@ -114,18 +114,27 @@ public partial class RedisServer : IDisposable
                 var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
 
                 // possibly multiple commands in the buffer
-                var cmds = input
+                /*var cmds = input
                     .Split("*", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(str => "*" + str);
-                foreach (var cmd in cmds)
+                    .Select(str => "*" + str);*/
+
+                var messages = Resp.Parse(input).ToArray();
+                foreach (var message in messages)
                 {
-                    // output string to bytes
-                    foreach (var output in Response(cmd, client))
+                    if (message is Command cmd)
                     {
-                        // log and respond
-                        Console.WriteLine(@$"Client #{socketNumber}. Received: {cmd.ReplaceLineEndings("\\r\\n")}."
-                            + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
-                        await stream.WriteAsync(output);
+                        // output string to bytes
+                        foreach (var output in Response(cmd.Original, client))
+                        {
+                            // log and respond
+                            Console.WriteLine(@$"Client #{socketNumber}. Command: {cmd.Original.ReplaceLineEndings("\\r\\n")}."
+                                + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
+                            await stream.WriteAsync(output);
+                        }
+                    }
+                    else if (message is Response response)
+                    {
+                        Console.WriteLine(@$"Client #{socketNumber}. Response: {response.Original.ReplaceLineEndings("\\r\\n")}.");
                     }
                 }
             }
