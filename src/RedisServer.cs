@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Redis.Database;
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -18,6 +19,7 @@ public partial class RedisServer : IDisposable
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
     private readonly List<TcpClient> _replicates = new();
+    private TcpClient? Master { get; set; }
     private RedisDatabase? _database { get; set; }
 
     public RedisServer(RedisConfig config)
@@ -75,8 +77,8 @@ public partial class RedisServer : IDisposable
             await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
             await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
-
-            Listen(client, -1);
+            Master = client;
+            Listen(Master, -1);
         }
         catch (Exception ex)
         {
@@ -189,24 +191,21 @@ public partial class RedisServer : IDisposable
         return "$-1\r\n";
     }
 
-    private string Set(string[] lines, string input, Command cmd)
+    private string Set(string input, Command cmd, TcpClient client)
     {
         var key = cmd[1];
         var value = cmd[2];
-        if (cmd.Length > 4 && cmd[3].ToUpperInvariant() == "PX")
-        {
-            _cache[key] = new RedisValue()
+        _cache[key] = cmd.Length > 4 && cmd[3].ToUpperInvariant() == "PX"
+            ? new RedisValue()
             {
                 Value = value,
                 Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(cmd[4]))
-            };
-        }
-        else
-        {
-            _cache[key] = new RedisValue() { Value = value };
-        }
+            }
+            : new RedisValue() { Value = value };
         Propagate(input);
-        return "+OK\r\n";
+        return client == Master
+            ? string.Empty
+            : "+OK\r\n";
     }
 
     private IEnumerable<byte[]> Response(string input, TcpClient client, Command cmd)
@@ -223,7 +222,7 @@ public partial class RedisServer : IDisposable
                 if (command == "PSYNC") return PSync(lines);
                 var response = command switch
                 {
-                    "SET" => Set(lines, input, cmd),
+                    "SET" => Set(input, cmd, client),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
                     "REPLCONF" => ReplConf(lines, client),
@@ -245,5 +244,6 @@ public partial class RedisServer : IDisposable
         {
             replicate.Dispose();
         }
+        Master?.Dispose();
     }
 }
