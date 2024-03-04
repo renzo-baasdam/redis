@@ -121,7 +121,7 @@ public partial class RedisServer : IDisposable
         // receive
         var buffer = new byte[1024];
         var stream = client.GetStream();
-        await Console.Out.WriteLineAsync($"Waiting to read for client {client.Client.RemoteEndPoint}...");
+        //await Console.Out.WriteLineAsync($"Waiting to read for client {client.Client.RemoteEndPoint}...");
         await stream.ReadAsync(buffer);
 
         // input bytes to string
@@ -135,18 +135,18 @@ public partial class RedisServer : IDisposable
         {
             if (message is Command cmd)
             {
+                Console.WriteLine(@$"Client #{socketNumber}. Received command: {cmd.Original.ReplaceLineEndings("\\r\\n")}.");
                 // output string to bytes
                 foreach (var output in Response(cmd.Original, client, cmd))
                 {
                     // log and respond
-                    Console.WriteLine(@$"Client #{socketNumber}. Command: {cmd.Original.ReplaceLineEndings("\\r\\n")}."
-                        + $"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
+                    Console.WriteLine($"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
                     await stream.WriteAsync(output);
                 }
             }
             else if (message is Response response)
             {
-                Console.WriteLine(@$"Client #{socketNumber}. Response: {response.Original.ReplaceLineEndings("\\r\\n")}.");
+                Console.WriteLine(@$"Client #{socketNumber}. Received response: {response.Original.ReplaceLineEndings("\\r\\n")}.");
             }
         }
     }
