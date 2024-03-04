@@ -18,7 +18,6 @@ public static class Resp
 {
     public static List<Message> Parse(string input)
     {
-        Console.WriteLine($"Parsing {input}");
         var messages = new List<Message>();
         var lines = input.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.TrimStart('\n'))
