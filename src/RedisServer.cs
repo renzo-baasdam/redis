@@ -58,7 +58,7 @@ public partial class RedisServer : IDisposable
         {
             var client = await _server.AcceptTcpClientAsync();
             Console.WriteLine($"Established Tcp connection #{clientNumber}");
-            await Task.Delay(5000);
+            await Task.Delay(2000);
             Listen(client, clientNumber);
             ++clientNumber;
         }
