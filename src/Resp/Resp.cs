@@ -18,11 +18,16 @@ public static class Resp
 {
     public static List<Message> Parse(string input)
     {
+        Console.WriteLine($"Parsing {input}");
         var messages = new List<Message>();
-        var lines = input.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        var lines = input.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.TrimStart('\n'))
+            .Where(line => line != string.Empty)
+            .ToArray();
         int index = 0;
         while (index < lines.Length)
         {
+            if (lines[index][0] == '\n') lines[index] = lines[index][1..];
             if (lines[index][0] == '*')
             {
                 if (!int.TryParse(lines[index][1..], out int arguments) || index + 2 * arguments > lines.Length)
@@ -49,7 +54,11 @@ public static class Resp
             }
             else if (lines[index][0] == '$')
             {
-                var length = int.Parse(lines[index][1..]);
+                if(!int.TryParse(lines[index][1..], out int length))
+                {
+                    ++index;
+                    continue;
+                }
                 if(length == -1)
                 {
                     messages.Add(new Response { Original = lines[index++] + "\r\n" });

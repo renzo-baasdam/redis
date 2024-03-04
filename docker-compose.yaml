@@ -1,0 +1,21 @@
+version: "3"
+services:
+  redis:
+    container_name: redis-master
+    image: redis
+    ports:
+      - "6379:6379"
+  redis-replica:
+    container_name: redis-replica
+    image: redis
+    command: redis-server --port 6380 --replicaof host.docker.internal 6379
+    ports:
+      - "6380:6380"
+  redis-own-implementation:
+    container_name: redis-own
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["--port", "6381", "--replicaof", "redis", "6379"]
+    ports:
+      - "6381:6381"
