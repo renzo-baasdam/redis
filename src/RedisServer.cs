@@ -49,7 +49,7 @@ public partial class RedisServer : IDisposable
         }
         if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
         {
-            Connect(masterPort);
+            await Connect(masterPort);
         }
         _server.Start();
         Console.WriteLine($"Listing on {_server.LocalEndpoint}");
@@ -63,7 +63,7 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    private async void Connect(int masterPort)
+    private async Task Connect(int masterPort)
     {
         try
         {
