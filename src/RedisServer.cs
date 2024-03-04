@@ -58,7 +58,7 @@ public partial class RedisServer : IDisposable
         {
             var client = await _server.AcceptTcpClientAsync();
             Console.WriteLine($"Established Tcp connection #{clientNumber}");
-            await Task.Delay(1000);
+            await Task.Delay(500);
             Listen(client, clientNumber);
             ++clientNumber;
         }
@@ -121,6 +121,7 @@ public partial class RedisServer : IDisposable
         // receive
         var buffer = new byte[1024];
         var stream = client.GetStream();
+        await Console.Out.WriteLineAsync($"Waiting to read for client {client.Client.RemoteEndPoint}...");
         await stream.ReadAsync(buffer);
 
         // input bytes to string
