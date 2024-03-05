@@ -1,6 +1,6 @@
+using Redis.Extensions;
 using System.Net.Sockets;
 using System.Text;
-using Redis.Extensions;
 
 namespace Redis.Server;
 
