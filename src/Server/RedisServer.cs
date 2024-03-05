@@ -19,7 +19,7 @@ public partial class RedisServer : IDisposable
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
-    private readonly List<TcpClient> _replicates = new();
+    private readonly List<TcpClient> _replicas = new();
     private TcpClient? Master { get; set; }
     private RedisDatabase? _database { get; set; }
 
@@ -59,7 +59,6 @@ public partial class RedisServer : IDisposable
         {
             var client = await _server.AcceptTcpClientAsync();
             Console.WriteLine($"Established Tcp connection #{clientNumber}");
-            await Task.Delay(1000);
             Listen(client, clientNumber);
             ++clientNumber;
         }
@@ -248,9 +247,9 @@ public partial class RedisServer : IDisposable
 
     public void Dispose()
     {
-        foreach (var replicate in _replicates)
+        foreach (var replica in _replicas)
         {
-            replicate.Dispose();
+            replica.Dispose();
         }
         Master?.Dispose();
     }

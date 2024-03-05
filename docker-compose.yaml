@@ -3,6 +3,7 @@ services:
   redis:
     container_name: redis-master
     image: redis
+    command: --dbfilename dump.rdb
     ports:
       - "6379:6379"
   redis-replica:

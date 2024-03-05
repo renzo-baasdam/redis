@@ -8,7 +8,7 @@ public partial class RedisServer
 {
     private async void Propagate(string cmd)
     {
-        foreach (var client in _replicates)
+        foreach (var client in _replicas)
         {
             try
             {
@@ -16,7 +16,7 @@ public partial class RedisServer
                 var stream = client.GetStream();
                 byte[] data = Encoding.UTF8.GetBytes(cmd);
 
-                Console.WriteLine($"Propagating cmd to replicate.");
+                Console.WriteLine($"Propagating cmd to replica.");
                 await stream.WriteAsync(data, 0, data.Length);
             }
             catch (Exception ex)
@@ -30,7 +30,7 @@ public partial class RedisServer
     {
         if (lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var port))
         {
-            _replicates.Add(client);
+            _replicas.Add(client);
             return "+OK\r\n";
         }
         var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "eof" && lines[8] == "capa" && lines[10] == "psync2";
