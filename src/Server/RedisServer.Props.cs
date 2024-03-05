@@ -1,4 +1,4 @@
-namespace Redis;
+namespace Redis.Server;
 
 public partial class RedisServer
 {

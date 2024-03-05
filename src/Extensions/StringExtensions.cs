@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Redis;
+namespace Redis.Extensions;
 
 internal static class StringExtensions
 {

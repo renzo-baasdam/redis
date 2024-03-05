@@ -1,11 +1,12 @@
+using Redis.Extensions;
 using Microsoft.CodeAnalysis;
 using Redis.Database;
 using System.Data;
-using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-namespace Redis;
+
+namespace Redis.Server;
 
 internal record RedisValue
 {

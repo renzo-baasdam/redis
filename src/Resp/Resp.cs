@@ -34,8 +34,9 @@ public static class Resp
                     Console.WriteLine("Invalid command");
                     break;
                 }
-                var message = new Command { 
-                    Arguments = new string[arguments], 
+                var message = new Command
+                {
+                    Arguments = new string[arguments],
                     Original = string.Join("\r\n", lines[index..(index + arguments * 2 + 1)]) + "\r\n",
                 };
                 for (int j = 0; j < arguments; ++j)
@@ -53,12 +54,12 @@ public static class Resp
             }
             else if (lines[index][0] == '$')
             {
-                if(!int.TryParse(lines[index][1..], out int length))
+                if (!int.TryParse(lines[index][1..], out int length))
                 {
                     ++index;
                     continue;
                 }
-                if(length == -1)
+                if (length == -1)
                 {
                     messages.Add(new Response { Original = lines[index++] + "\r\n" });
                     continue;
@@ -67,7 +68,7 @@ public static class Resp
                 sb.Append(lines[index] + "\r\n");
                 int headerLength = sb.Length;
                 ++index;
-                while(sb.Length - headerLength < length && index < lines.Length)
+                while (sb.Length - headerLength < length && index < lines.Length)
                 {
                     sb.Append(lines[index++] + "\r\n");
                 }

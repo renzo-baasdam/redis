@@ -1,3 +1,6 @@
+using Redis.Extensions;
+using Redis.Server;
+
 namespace Redis;
 
 public static class Program

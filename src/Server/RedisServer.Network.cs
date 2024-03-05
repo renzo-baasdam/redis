@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Redis;
+namespace Redis.Server;
 
 public partial class RedisServer
 {
