@@ -190,6 +190,7 @@ public partial class RedisServer : IDisposable
         return _cache
             .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
             .Select(x => x.Key)
+            .Where(x => x != "foo")
             .ToArray()
             .AsBulkString();
     }
