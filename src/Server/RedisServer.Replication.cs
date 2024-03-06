@@ -41,7 +41,7 @@ public partial class RedisServer
     private byte[][] PSync(string[] lines)
     {
         var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
-        if (lines.Length > 6 && lines[4] == "?" && lines[6] == "-1")
+        if (lines.Length > 6 && int.TryParse(lines[6], out int offset))
         {
             var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n".AsUtf8();
             var rdbResponse = $"${bytes.Length}\r\n".AsUtf8().Concat(bytes).ToArray();
