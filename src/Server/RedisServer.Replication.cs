@@ -33,7 +33,7 @@ public partial class RedisServer
             _replicas.Add(client);
             return "+OK\r\n";
         }
-        var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "eof" && lines[8] == "capa" && lines[10] == "psync2";
+        var second = lines.Length > 10 && lines[4] == "capa" && lines[6] == "psync2";
         if (second) return "+OK\r\n";
         return "$-1\r\n";
     }

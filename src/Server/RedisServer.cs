@@ -80,7 +80,7 @@ public partial class RedisServer : IDisposable
             await ListenOnce(client, -1);
             await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
             await ListenOnce(client, -1);
-            await Send(client, new string[] { "REPLCONF", "capa", "eof", "capa", "psync2" });
+            await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
             await ListenOnce(client, -1);
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
             await ListenOnce(client, -1);
