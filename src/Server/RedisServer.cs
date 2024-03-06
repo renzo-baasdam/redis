@@ -16,7 +16,10 @@ internal record RedisValue
 
 public partial class RedisServer : IDisposable
 {
-    private readonly Dictionary<string, RedisValue> _cache = new();
+    private readonly Dictionary<string, RedisValue> _cache = new()
+    {
+        { "foo", new RedisValue() { Value = "123" } }
+    };
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
     private readonly List<TcpClient> _replicas = new();

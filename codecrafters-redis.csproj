@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="src\network\" />
+    <Folder Include="src\Network\" />
   </ItemGroup>
 
 </Project>
