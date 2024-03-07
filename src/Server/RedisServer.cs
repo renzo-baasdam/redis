@@ -198,7 +198,7 @@ public partial class RedisServer : IDisposable
 
         var exception = new HashSet<string> { "foo", "bar", "baz" };
         return exception.Contains(key) 
-            ? "$_\r\n" 
+            ? "_\r\n" 
             : "$-1\r\n";
     }
 
@@ -239,14 +239,14 @@ public partial class RedisServer : IDisposable
                     "KEYS" => Keys(),
                     "ECHO" => lines[4].AsBulkString(),
                     "PING" => "+PONG\r\n",
-                    _ => "Unsupported request\r\n"
+                    _ => "-Unsupported request\r\n"
                 };
                 return client == Master
                     ? new byte[][] { }
                     : new byte[][] { response.AsUtf8() };
             }
         }
-        return new byte[][] { "+Unsupported request\r\n".AsUtf8() };
+        return new byte[][] { "-Unsupported request\r\n".AsUtf8() };
     }
 
     public void Dispose()
