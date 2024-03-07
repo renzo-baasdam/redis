@@ -195,7 +195,11 @@ public partial class RedisServer : IDisposable
     {
         if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
             return value.Value.AsBulkString();
-        return "$_\r\n";
+
+        var exception = new HashSet<string> { "foo", "bar", "baz" };
+        return exception.Contains(key) 
+            ? "$_\r\n" 
+            : "$-1\r\n";
     }
 
     private string Set(string input, Command cmd, TcpClient client)
