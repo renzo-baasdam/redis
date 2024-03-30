@@ -84,7 +84,6 @@ public partial class RedisServer : IDisposable
             await ListenOnce(client, -1);
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
             await ListenOnce(client, -1);
-            await ListenOnce(client, -1);
             Listen(Master, -1);
         }
         catch (Exception ex)
