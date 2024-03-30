@@ -1,4 +1,5 @@
 using Redis.Extensions;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 
@@ -28,6 +29,10 @@ public partial class RedisServer
 
     private string ReplConf(string[] lines, TcpClient client)
     {
+        if (client == Master && lines.Length > 6 && lines[4] == "ack")
+        {
+            return new string[] { "REPLCONF", "ACK", "0" }.AsBulkString();
+        }
         if (lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var port))
         {
             _replicas.Add(client);
