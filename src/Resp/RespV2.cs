@@ -69,4 +69,27 @@ public class RespParser
         var value = Encoding.UTF8.GetString(buffer, end + 2, length);
         return (new BulkStringMessage(value), end + 2 + length + 2);
     }
+
+    public (MessageV2, int) ParseArray(byte[] buffer, int bufferLastIndex, int offset)
+    {
+        int length = 0;
+        int end = offset + 1;
+        while (end < bufferLastIndex)
+        {
+            if ((char)buffer[end] == '\r' && (char)buffer[end + 1] == '\n') break;
+            int num = buffer[end] - '0';
+            if (num >= 0 && num <= 9) length = length * 10 + num;
+            else throw new InvalidOperationException($"Array didn't start with a number.");
+            ++end;
+        }
+        if (end == bufferLastIndex) throw new InvalidOperationException($"Reached end of buffer before finding an \\r\\n.");
+        end = end + 2;
+        var messages = new List<MessageV2>();
+        for (int i = 0; i < length; i++)
+        {
+            (MessageV2 message, end) = ParseBulkString(buffer, bufferLastIndex, end);
+            messages.Add(message);
+        }
+        return (new ArrayMessage(messages), end);
+    }
 }

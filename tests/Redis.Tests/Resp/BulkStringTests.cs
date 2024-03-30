@@ -42,6 +42,7 @@ public class BulkStringTests
         var bytes = new byte[1024];
         Encoding.UTF8.GetBytes(msg, bytes);
         var parse = () => parser.ParseBulkString(bytes, msg.Length - 1, 0);
-        parse.Should().Throw<InvalidOperationException>($"Bulk string didn't start with a number.");
+        parse.Should().Throw<InvalidOperationException>()
+            .WithMessage($"Bulk string didn't start with a number.");
     }
 }
