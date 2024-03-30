@@ -29,9 +29,13 @@ public partial class RedisServer
 
     private string ReplConf(string[] lines, TcpClient client)
     {
-        if (client == Master && lines.Length > 6 && lines[4] == "ack")
+        if (lines.Length > 6 && lines[4].ToLowerInvariant() == "getack")
         {
             return new string[] { "REPLCONF", "ACK", "0" }.AsBulkString();
+        }
+        if (lines.Length > 6 && lines[4].ToLowerInvariant() == "ack")
+        {
+            return string.Empty;
         }
         if (lines.Length > 6 && lines[4] == "listening-port" && int.TryParse(lines[6], out var port))
         {
@@ -50,7 +54,8 @@ public partial class RedisServer
         {
             var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n".AsUtf8();
             var rdbResponse = $"${bytes.Length}\r\n".AsUtf8().Concat(bytes).ToArray();
-            return new byte[][] { initialResponse, rdbResponse };
+            var getack = new string[] { "REPLCONF", "GETACK", "*" }.AsBulkString().AsUtf8();
+            return new byte[][] { initialResponse, rdbResponse, getack };
         }
         return new byte[][] { "$-1\r\n".AsUtf8() };
     }

@@ -83,8 +83,7 @@ public partial class RedisServer : IDisposable
             await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
             await ListenOnce(client, -1);
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
-            Console.WriteLine("Replica listening 1");
-            await ListenOnce(Master, -1);
+            await ListenOnce(client, -1);
             Listen(Master, -1);
         }
         catch (Exception ex)
@@ -129,7 +128,6 @@ public partial class RedisServer : IDisposable
         var bufferEnd = Array.IndexOf(buffer, (byte)0);
         if (bufferEnd == 0) { return; }
         var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
-        Console.WriteLine($"Received input: {input}");
         // parse input as RESP
         var messages = Resp.Parse(input).ToArray();
         foreach (var message in messages)
@@ -226,6 +224,7 @@ public partial class RedisServer : IDisposable
             {
                 var command = lines[2].ToUpperInvariant();
                 if (command == "PSYNC") return PSync(lines);
+                if (command == "REPLCONF" && client == Master) return new byte[][] { ReplConf(lines, client).AsUtf8() };
                 var response = command switch
                 {
                     "SET" => Set(input, cmd, client),
@@ -238,7 +237,7 @@ public partial class RedisServer : IDisposable
                     "PING" => "+PONG\r\n",
                     _ => "-Unsupported request\r\n"
                 };
-                return client == Master
+                return client == Master || response == string.Empty
                     ? new byte[][] { }
                     : new byte[][] { response.AsUtf8() };
             }
