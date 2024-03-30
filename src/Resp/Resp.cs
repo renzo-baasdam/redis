@@ -19,6 +19,7 @@ public static class Resp
     public static List<Message> Parse(string input)
     {
         var messages = new List<Message>();
+        Console.WriteLine(input);
         var lines = input.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.TrimStart('\n'))
             .Where(line => line != string.Empty)
