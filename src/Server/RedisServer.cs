@@ -129,7 +129,6 @@ public partial class RedisServer : IDisposable
         var bufferEnd = Array.IndexOf(buffer, (byte)0);
         if (bufferEnd == 0) { return; }
         var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
-        Console.WriteLine($"Received input: {input}"); // replica stage 13 fails without this
         // parse input as RESP
         var messages = Resp.Parse(input).ToArray();
         foreach (var message in messages)
