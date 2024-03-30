@@ -87,11 +87,6 @@ public partial class RedisServer : IDisposable
             await ListenOnce(client, -1);
             Console.WriteLine("Replica listening 2");
             await ListenOnce(client, -1);
-            Console.WriteLine("Replica listening 3");
-            await ListenOnce(client, -1);
-            Console.WriteLine("Replica listening 4");
-            await ListenOnce(client, -1);
-            Console.WriteLine("Replica listening 5");
             Listen(Master, -1);
         }
         catch (Exception ex)
