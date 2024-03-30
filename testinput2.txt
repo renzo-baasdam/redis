@@ -1,0 +1,25 @@
++FULLRESYNC d1cs9j94cut95eix7ax7ujk9lhpd6m4gqgz7ph20 0
+$8
+R12
+4
+*3
+$3
+SET
+$3
+foo
+$3
+123
+*3
+$3
+SET
+$3
+bar
+$3
+456
+*3
+$3
+SET
+$3
+baz
+$3
+789

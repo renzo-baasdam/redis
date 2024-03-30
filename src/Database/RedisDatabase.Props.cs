@@ -1,3 +1,5 @@
+using Redis.Server;
+
 namespace Redis.Database;
 
 internal partial class RedisDatabase

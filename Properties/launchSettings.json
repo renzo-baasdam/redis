@@ -1,11 +1,12 @@
 {
   "profiles": {
-    "redis-with": {
+    "redis-host": {
       "commandName": "Project",
-      "commandLineArgs": "--dir /Users/renzo/source/repos/redis --dbfilename dump.rdb"
+      "commandLineArgs": "--port 6379 --dir /Users/renzo/source/repos/redis --dbfilename dump.rdb"
     },
-    "redis-without": {
-      "commandName": "Project"
+    "redis-replica": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 6380 --replicaof localhost 6379 --dir /Users/renzo/source/repos/redis --dbfilename dump.rdb"
     }
   }
 }
