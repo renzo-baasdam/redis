@@ -2,7 +2,7 @@ using FluentAssertions;
 using Redis.Database;
 using Redis.Server;
 
-namespace Redis.Tests;
+namespace Redis.Tests.Database;
 
 public class Rdb_parser
 {

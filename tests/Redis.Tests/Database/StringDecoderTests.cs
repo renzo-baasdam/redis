@@ -2,7 +2,7 @@ using FluentAssertions;
 using Redis.Database;
 using System.Text;
 
-namespace Redis.Tests;
+namespace Redis.Tests.Database;
 
 public class StringDecoderTests
 {

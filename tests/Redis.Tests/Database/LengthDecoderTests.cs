@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Redis.Database;
 
-namespace Redis.Tests;
+namespace Redis.Tests.Database;
 
 public class Length_decoder
 {
@@ -26,7 +26,7 @@ public class Length_decoder
     {
         int index = 0;
         uint header = 0b0100_0000;
-        var first = (byte)((value >> 8) & 0b11_1111 | header);
+        var first = (byte)(value >> 8 & 0b11_1111 | header);
         var second = (byte)value;
         var encoded = new byte[] { first, second };
         RedisDatabase.DecodeLength(index, encoded).Should().Be((value, 2));
@@ -35,7 +35,7 @@ public class Length_decoder
     [TestCase((uint)0x0)]
     [TestCase((uint)0x1)]
     [TestCase((uint)0x2)]
-    [TestCase((uint)0xFFFFFFFF)]
+    [TestCase(0xFFFFFFFF)]
     public void parses_10_header(uint value)
     {
         int index = 0;
