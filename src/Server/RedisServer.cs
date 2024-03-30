@@ -129,6 +129,7 @@ public partial class RedisServer : IDisposable
         var bufferEnd = Array.IndexOf(buffer, (byte)0);
         if (bufferEnd == 0) { return; }
         var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
+        Console.WriteLine($"Received input: {input}");
         await Task.Delay(10);
         // parse input as RESP
         var messages = Resp.Parse(input).ToArray();
