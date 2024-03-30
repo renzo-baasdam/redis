@@ -54,8 +54,7 @@ public partial class RedisServer
         {
             var initialResponse = $"+FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}\r\n".AsUtf8();
             var rdbResponse = $"${bytes.Length}\r\n".AsUtf8().Concat(bytes).ToArray();
-            var getack = new string[] { "REPLCONF", "GETACK", "*" }.AsBulkString().AsUtf8();
-            return new byte[][] { initialResponse, rdbResponse, getack };
+            return new byte[][] { initialResponse, rdbResponse };
         }
         return new byte[][] { "$-1\r\n".AsUtf8() };
     }
