@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 
 namespace Redis;
@@ -22,15 +23,8 @@ public class RespParser
         var bufferLastIndex = Array.IndexOf(buffer, (byte)0) - 1;
         while (offset < bufferLastIndex)
         {
-            var header = (char)(buffer[offset]);
-            (MessageV2 msg, offset) = header switch
-            {
-                '+' => ParseSimpleString(buffer, bufferLastIndex, offset),
-                '$' => ParseBulkString(buffer, bufferLastIndex, offset),
-                '*' => ParseSimpleString(buffer, bufferLastIndex, offset),
-                _ => ParseSimpleString(buffer, bufferLastIndex, offset)
-            };
-            _bufferedMessages.Enqueue(msg);
+            (MessageV2? msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
+            if (msg is not null) _bufferedMessages.Enqueue(msg);
         }
 
         return _bufferedMessages.Any()
@@ -87,9 +81,21 @@ public class RespParser
         var messages = new List<MessageV2>();
         for (int i = 0; i < length; i++)
         {
-            (MessageV2 message, end) = ParseBulkString(buffer, bufferLastIndex, end);
-            messages.Add(message);
+            (MessageV2? msg, end) = ParseMessage(buffer, bufferLastIndex, end);
+            if (msg is not null) messages.Add(msg);
         }
         return (new ArrayMessage(messages), end);
+    }
+
+    private (MessageV2?, int) ParseMessage(byte[] buffer, int bufferLastIndex, int offset)
+    {
+        var header = (char)(buffer[offset]);
+        return header switch
+        {
+            '+' => ParseSimpleString(buffer, bufferLastIndex, offset),
+            '$' => ParseBulkString(buffer, bufferLastIndex, offset),
+            '*' => ParseArray(buffer, bufferLastIndex, offset),
+            _ => (null, ++offset)
+        };
     }
 }

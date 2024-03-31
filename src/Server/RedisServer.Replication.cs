@@ -30,7 +30,7 @@ public partial class RedisServer
     {
         if (lines.Length > 6 && lines[4].ToLowerInvariant() == "getack")
         {
-            return new string[] { "REPLCONF", "ACK", "0" }.AsBulkString();
+            return new string[] { "REPLCONF", "ACK", "0" }.AsArrayString();
         }
         if (lines.Length > 6 && lines[4].ToLowerInvariant() == "ack")
         {

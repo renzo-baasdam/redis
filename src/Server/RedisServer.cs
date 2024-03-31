@@ -59,7 +59,7 @@ public partial class RedisServer : IDisposable
         {
             var client = await _server.AcceptTcpClientAsync();
             Console.WriteLine($"Established Tcp connection #{clientNumber}");
-            Listen(client, clientNumber);
+            ListenV2(client, clientNumber);
             ++clientNumber;
         }
     }
@@ -85,7 +85,7 @@ public partial class RedisServer : IDisposable
             await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
             await ListenOnce(client, -1);
             await ListenOnce(client, -1);
-            Listen(Master, -1);
+            ListenV2(Master, -1);
         }
         catch (Exception ex)
         {
@@ -95,7 +95,7 @@ public partial class RedisServer : IDisposable
         async Task Send(TcpClient client, string[] msg, int responses = 1)
         {
             var stream = client.GetStream();
-            var data = msg.AsBulkString().AsUtf8();
+            var data = msg.AsArrayString().AsUtf8();
             Console.WriteLine($"Sending cmd: {string.Join(',', msg)} to master");
             await stream.WriteAsync(data, 0, data.Length);
         }
@@ -164,7 +164,7 @@ public partial class RedisServer : IDisposable
                 RedisConfigKeys.Directory => _config.Directory,
                 _ => null
             };
-            if (fetched is not null) return new string[] { lines[6], fetched }.AsBulkString();
+            if (fetched is not null) return new string[] { lines[6], fetched }.AsArrayString();
         }
         return "$-1\r\n";
     }
@@ -190,7 +190,7 @@ public partial class RedisServer : IDisposable
             .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
             .Select(x => x.Key)
             .ToArray()
-            .AsBulkString();
+            .AsArrayString();
     }
 
     private string Get(string key)

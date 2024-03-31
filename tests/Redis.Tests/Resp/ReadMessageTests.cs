@@ -9,13 +9,18 @@ public class ReadMessageTests
     public async Task RespParser_parses_multiple_messages_in_same_stream()
     {
         var bytes = new byte[1024];
-        var simple = $"+One\r\n$12\r\n123456789012\r\n+Three\r\n";
+        var simple = $"+One\r\n$12\r\n123456789012\r\n*2\r\n+Three\r\n$4\r\nFour\r\n";
         Encoding.UTF8.GetBytes(simple, bytes);
 
         using var stream = new MemoryStream(bytes);
         var parser = new RespParser(stream);
-        (await parser.ReadMessage()).Should().Be(new SimpleStringMessage("One"));
-        (await parser.ReadMessage()).Should().Be(new BulkStringMessage("123456789012"));
-        (await parser.ReadMessage()).Should().Be(new SimpleStringMessage("Three"));
+        (await parser.ReadMessage()).Should().BeEquivalentTo(new SimpleStringMessage("One"));
+        (await parser.ReadMessage()).Should().BeEquivalentTo(new BulkStringMessage("123456789012"));
+        (await parser.ReadMessage()).Should().BeEquivalentTo(new ArrayMessage(
+            new List<MessageV2>()
+            {
+                new SimpleStringMessage("Three"),
+                new BulkStringMessage("Four"),
+            }));
     }
 }
