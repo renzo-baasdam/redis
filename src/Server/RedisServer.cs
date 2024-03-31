@@ -50,8 +50,7 @@ public partial class RedisServer : IDisposable
         }
         if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
         {
-            await Connect(masterPort);
-            ListenV2(Master!, -1);
+            Connect(masterPort);
         }
         _server.Start();
         Console.WriteLine($"Listing on {_server.LocalEndpoint}");
@@ -66,7 +65,7 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    private async Task Connect(int masterPort)
+    private async void Connect(int masterPort)
     {
         try
         {
@@ -89,6 +88,7 @@ public partial class RedisServer : IDisposable
             await Send(stream, new ArrayMessage("PSYNC", "?", "-1" ));
             await ListenOnceV2(parser, stream, client, -1);
             await ListenOnceV2(parser, stream, client, -1);
+            ListenV2(Master!, -1);
         }
         catch (Exception ex)
         {
@@ -101,153 +101,6 @@ public partial class RedisServer : IDisposable
             await stream.WriteAsync(msg.ToBytes());
         }
     }
-
-    async void Listen(TcpClient client, int socketNumber)
-    {
-        while (true)
-        {
-            try
-            {
-                await ListenOnce(client, socketNumber);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Caught exception: {ex.Message}");
-                break;
-            }
-        }
-    }
-
-    async Task ListenOnce(TcpClient client, int socketNumber)
-    {
-        // receive
-        var buffer = new byte[1024];
-        var stream = client.GetStream();
-        //await Console.Out.WriteLineAsync($"Waiting to read for client {client.Client.RemoteEndPoint}...");
-        await stream.ReadAsync(buffer);
-
-        // input bytes to string
-        var bufferEnd = Array.IndexOf(buffer, (byte)0);
-        if (bufferEnd == 0) { return; }
-        var input = Encoding.UTF8.GetString(buffer, 0, bufferEnd);
-        Console.WriteLine($"Received input: {input}");
-        await Task.Delay(10);
-        // parse input as RESP
-        var messages = Resp.Parse(input).ToArray();
-        foreach (var message in messages)
-        {
-            if (message is Command cmd)
-            {
-                Console.WriteLine(@$"Client #{socketNumber}. Received command: {cmd.Original.ReplaceLineEndings("\\r\\n")}.");
-                // output string to bytes
-                foreach (var output in Response(cmd.Original, client, cmd))
-                {
-                    // log and respond
-                    Console.WriteLine($"Response: {Encoding.UTF8.GetString(output).Replace("\r\n", "\\r\\n")}");
-                    await stream.WriteAsync(output);
-                }
-            }
-            else if (message is Response response)
-            {
-                Console.WriteLine(@$"Client #{socketNumber}. Received response: {response.Original.ReplaceLineEndings("\\r\\n")}.");
-            }
-        }
-    }
-
-    private string Config(string[] lines)
-    {
-        if (lines[4].ToUpperInvariant() == "GET")
-        {
-            var arg = lines[6];
-            var fetched = arg switch
-            {
-                RedisConfigKeys.Filename => _config.Filename,
-                RedisConfigKeys.Directory => _config.Directory,
-                _ => null
-            };
-            if (fetched is not null) return new string[] { lines[6], fetched }.AsArrayString();
-        }
-        return "$-1\r\n";
-    }
-
-    private string Info(string[] lines)
-    {
-        if (lines.Length > 4 && lines[4].ToUpperInvariant() == "REPLICATION")
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"{RedisConfigKeys.Role}:{_config.Role}");
-            if (_config.MasterReplicationId is not null) sb.AppendLine($"{RedisConfigKeys.MasterReplicationId}:{_config.MasterReplicationId}");
-            sb.AppendLine($"{RedisConfigKeys.MasterReplicationOffset}:{_config.MasterReplicationOffset}");
-
-            return sb.ToString().AsBulkString();
-        }
-        return "$-1\r\n";
-    }
-
-    private string Keys()
-    {
-        return _cache
-            .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
-            .Select(x => x.Key)
-            .ToArray()
-            .AsArrayString();
-    }
-
-    private string Get(string key)
-    {
-        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
-            return value.Value.AsBulkString();
-        return "$-1\r\n";
-    }
-
-    /*private string Set(string input, Command cmd, TcpClient client)
-    {
-        var key = cmd[1];
-        var value = cmd[2];
-        _cache[key] = cmd.Length > 4 && cmd[3].ToUpperInvariant() == "PX"
-            ? new RedisValue()
-            {
-                Value = value,
-                Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(cmd[4]))
-            }
-            : new RedisValue() { Value = value };
-        Propagate(input);
-        return "+OK\r\n";
-    }*/
-
-    private IEnumerable<byte[]> Response(string input, TcpClient client, Command cmd)
-    {
-        var lines = input.Split("\r\n");
-        if (lines.Length > 0)
-        {
-            var arguments = lines[0];
-            if (arguments.Length > 1
-                && arguments[0] == '*'
-                && int.TryParse(arguments[1..], out var numberOfArguments))
-            {
-                var command = lines[2].ToUpperInvariant();
-                if (command == "PSYNC") return PSync(lines);
-                if (command == "REPLCONF" && client == Master) return new byte[][] { ReplConf(lines, client).AsUtf8() };
-                var response = command switch
-                {
-                    //"SET" => Set(input, cmd, client),
-                    "GET" => Get(lines[4]),
-                    "CONFIG" => Config(lines),
-                    "REPLCONF" => ReplConf(lines, client),
-                    "INFO" => Info(lines),
-                    "KEYS" => Keys(),
-                    "ECHO" => lines[4].AsBulkString(),
-                    "PING" => "+PONG\r\n",
-                    _ => "-Unsupported request\r\n"
-                };
-                return client == Master || response == string.Empty
-                    ? new byte[][] { }
-                    : new byte[][] { response.AsUtf8() };
-            }
-        }
-        return new byte[][] { "-Unsupported request\r\n".AsUtf8() };
-    }
-
     public void Dispose()
     {
         foreach (var replica in _replicas)
