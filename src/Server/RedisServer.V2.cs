@@ -77,11 +77,11 @@ public partial class RedisServer : IDisposable
     {
         var key = args[0];
         var value = args[1];
-        _cache[key] = args.Length >= 4 && args[3].ToUpper() == "PX"
+        _cache[key] = args.Length >= 3 && args[2].ToUpper() == "PX"
             ? new RedisValue()
             {
                 Value = value,
-                Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[4]))
+                Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[3]))
             }
             : new RedisValue() { Value = value };
         //Propagate(args);
