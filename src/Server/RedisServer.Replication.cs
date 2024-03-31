@@ -6,18 +6,15 @@ namespace Redis.Server;
 
 public partial class RedisServer
 {
-    private async void Propagate(string cmd)
+    private async void Propagate(MessageV2 msg)
     {
         foreach (var client in _replicas)
         {
             try
             {
-                // send ping
                 var stream = client.GetStream();
-                byte[] data = Encoding.UTF8.GetBytes(cmd);
-
                 Console.WriteLine($"Propagating cmd to replica.");
-                await stream.WriteAsync(data, 0, data.Length);
+                await stream.WriteAsync(msg.ToBytes());
             }
             catch (Exception ex)
             {

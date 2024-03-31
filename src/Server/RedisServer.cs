@@ -70,21 +70,23 @@ public partial class RedisServer : IDisposable
         {
             var client = new TcpClient();
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
-
             await client.ConnectAsync(endpoint);
+
+            var stream = client.GetStream();
+            var parser = new RespParser(stream);
 
             Master = client;
 
             // handshake
-            await Send(client, new string[] { "PING" });
-            await ListenOnce(client, -1);
-            await Send(client, new string[] { "REPLCONF", "listening-port", _config.Port.ToString() });
-            await ListenOnce(client, -1);
-            await Send(client, new string[] { "REPLCONF", "capa", "psync2" });
-            await ListenOnce(client, -1);
-            await Send(client, new string[] { "PSYNC", "?", "-1" }, 2);
-            await ListenOnce(client, -1);
-            await ListenOnce(client, -1);
+            await Send(stream, new ArrayMessage("PING"));
+            await ListenOnceV2(parser, stream, client, -1);
+            await Send(stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
+            await ListenOnceV2(parser, stream, client, -1);
+            await Send(stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
+            await ListenOnceV2(parser, stream, client, -1);
+            await Send(stream, new ArrayMessage("PSYNC", "?", "-1" ));
+            await ListenOnceV2(parser, stream, client, -1);
+            await ListenOnceV2(parser, stream, client, -1);
             ListenV2(Master, -1);
         }
         catch (Exception ex)
@@ -92,12 +94,10 @@ public partial class RedisServer : IDisposable
             Console.WriteLine(ex.Message);
         }
 
-        async Task Send(TcpClient client, string[] msg, int responses = 1)
+        async Task Send(Stream stream, ArrayMessage msg)
         {
-            var stream = client.GetStream();
-            var data = msg.AsArrayString().AsUtf8();
-            Console.WriteLine($"Sending cmd: {string.Join(',', msg)} to master");
-            await stream.WriteAsync(data, 0, data.Length);
+            Console.WriteLine($"Sending cmd to master: {msg.ToString().Replace("\r\n", "\\r\\n")}");
+            await stream.WriteAsync(msg.ToBytes());
         }
     }
 
@@ -179,7 +179,6 @@ public partial class RedisServer : IDisposable
             sb.AppendLine($"{RedisConfigKeys.MasterReplicationOffset}:{_config.MasterReplicationOffset}");
 
             return sb.ToString().AsBulkString();
-
         }
         return "$-1\r\n";
     }
@@ -200,7 +199,7 @@ public partial class RedisServer : IDisposable
         return "$-1\r\n";
     }
 
-    private string Set(string input, Command cmd, TcpClient client)
+    /*private string Set(string input, Command cmd, TcpClient client)
     {
         var key = cmd[1];
         var value = cmd[2];
@@ -213,7 +212,7 @@ public partial class RedisServer : IDisposable
             : new RedisValue() { Value = value };
         Propagate(input);
         return "+OK\r\n";
-    }
+    }*/
 
     private IEnumerable<byte[]> Response(string input, TcpClient client, Command cmd)
     {
@@ -230,7 +229,7 @@ public partial class RedisServer : IDisposable
                 if (command == "REPLCONF" && client == Master) return new byte[][] { ReplConf(lines, client).AsUtf8() };
                 var response = command switch
                 {
-                    "SET" => Set(input, cmd, client),
+                    //"SET" => Set(input, cmd, client),
                     "GET" => Get(lines[4]),
                     "CONFIG" => Config(lines),
                     "REPLCONF" => ReplConf(lines, client),
