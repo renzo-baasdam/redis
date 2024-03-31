@@ -31,6 +31,7 @@ public partial class RedisServer : IDisposable
     async Task ListenOnceV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber)
     {
         // parse input as RESP
+        Console.WriteLine($"Client #{socketNumber}. Ready to listen to new command");
         var message = await parser.ReadMessage();
         if (message is not null)
         {
