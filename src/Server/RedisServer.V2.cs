@@ -57,6 +57,9 @@ public partial class RedisServer : IDisposable
             return command switch
             {
                 "SET" => new List<MessageV2>() { SetV2(args) },
+                "GET" => new List<MessageV2>() { GetV2(args[0]) },
+                "ECHO" => new List<MessageV2>() { new BulkStringMessage(args[0]) },
+                "PING" => new List<MessageV2>() { new SimpleStringMessage("PONG") },
                 _ => new List<MessageV2>() { }
             };
         }
@@ -83,5 +86,12 @@ public partial class RedisServer : IDisposable
             : new RedisValue() { Value = value };
         //Propagate(args);
         return new SimpleStringMessage("OK");
+    }
+
+    private BulkStringMessage GetV2(string key)
+    {
+        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
+            return new BulkStringMessage(value.Value);
+        return new NullBulkStringMessage();
     }
 }

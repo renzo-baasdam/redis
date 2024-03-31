@@ -8,7 +8,11 @@ public sealed record SimpleStringMessage(string Value) : MessageV2
 {
     public override string ToString() => Value.AsSimpleString();
 }
-public sealed record BulkStringMessage(string Value) : MessageV2
+public sealed record NullBulkStringMessage() : BulkStringMessage(string.Empty)
+{
+    public override string ToString() => $"$-1\r\n";
+}
+public record BulkStringMessage(string Value) : MessageV2
 {
     public override string ToString() => Value.AsBulkString();
 }

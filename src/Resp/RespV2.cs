@@ -49,6 +49,9 @@ public class RespParser
     {
         int length = 0;
         int end = offset + 1;
+        // check for null bulk string $-1\r\n
+        if (end + 1 <= bufferLastIndex && (char)buffer[end] == '-' && (char)buffer[end + 1] == '1')
+            return (new NullBulkStringMessage(), end + 2);
         while (end < bufferLastIndex)
         {
             if ((char)buffer[end] == '\r' && (char)buffer[end + 1] == '\n') break;
