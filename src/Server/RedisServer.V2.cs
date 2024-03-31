@@ -56,10 +56,14 @@ public partial class RedisServer : IDisposable
             (var command, var args) = ParseCommand(array);
             return command switch
             {
-                "SET" => new List<MessageV2>() { SetV2(args) },
                 "GET" => new List<MessageV2>() { GetV2(args[0]) },
+                "SET" => new List<MessageV2>() { SetV2(args) },
                 "ECHO" => new List<MessageV2>() { new BulkStringMessage(args[0]) },
                 "PING" => new List<MessageV2>() { new SimpleStringMessage("PONG") },
+                "KEYS" => new List<MessageV2>() { KeysV2() },
+                "INFO" => new List<MessageV2>() { InfoV2(args) },
+                "CONFIG" => new List<MessageV2>() { ConfigV2(args) },
+                //"REPLCONF" => ReplConf(lines, client),
                 _ => new List<MessageV2>() { }
             };
         }
@@ -93,5 +97,50 @@ public partial class RedisServer : IDisposable
         if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
             return new BulkStringMessage(value.Value);
         return new NullBulkStringMessage();
+    }
+
+    private ArrayMessage KeysV2()
+    {
+        var keys = _cache
+            .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
+            .Select(x => new BulkStringMessage(x.Key))
+            .ToList<MessageV2>();
+        return new ArrayMessage(keys);
+    }
+
+    private BulkStringMessage InfoV2(string[] args)
+    {
+        if (args.Length >= 1 && args[0].ToLower() == "replication")
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"{RedisConfigKeys.Role}:{_config.Role}");
+            if (_config.MasterReplicationId is not null) sb.AppendLine($"{RedisConfigKeys.MasterReplicationId}:{_config.MasterReplicationId}");
+            sb.AppendLine($"{RedisConfigKeys.MasterReplicationOffset}:{_config.MasterReplicationOffset}");
+            return new BulkStringMessage(sb.ToString());
+        }
+        return new NullBulkStringMessage();
+    }
+
+    private ArrayMessage ConfigV2(string[] args)
+    {
+        if (args[0].ToUpper() == "GET")
+        {
+            var key = args[1];
+            var value = key switch
+            {
+                RedisConfigKeys.Filename => _config.Filename,
+                RedisConfigKeys.Directory => _config.Directory,
+                _ => null
+            };
+            if (value is not null)
+            {
+                var pair = new List<MessageV2>() {
+                    new BulkStringMessage(key),
+                    new BulkStringMessage(value)
+                };
+                return new ArrayMessage(pair);
+            }
+        }
+        return new ArrayMessage(new List<MessageV2>());
     }
 }
