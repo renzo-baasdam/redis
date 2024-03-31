@@ -21,6 +21,7 @@ public record BulkStringMessage(string Value) : MessageV2
 }
 public record RdbFileMessage(byte[] Data) : MessageV2
 {
+    public override string ToString() => ToBytes().AsUtf8();
     public override byte[] ToBytes() => Data.AsRdbFile();
 }
 public sealed record ArrayMessage(List<MessageV2> Values) : MessageV2
