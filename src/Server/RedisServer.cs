@@ -33,6 +33,12 @@ public partial class RedisServer : IDisposable
     {
         Console.WriteLine("Starting Redis...");
         if (DatabasePath is not null)
+            LoadDatabase();
+        if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
+            Connect(masterPort);
+        await StartServer();
+
+        void LoadDatabase()
         {
             try
             {
@@ -48,20 +54,20 @@ public partial class RedisServer : IDisposable
                 Console.WriteLine($"Error loading database: {ex.Message}");
             }
         }
-        if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
+
+        async Task StartServer()
         {
-            Connect(masterPort);
-        }
-        _server.Start();
-        Console.WriteLine($"Listing on {_server.LocalEndpoint}");
-        int clientNumber = 0;
-        while (true)
-        {
-            var client = await _server.AcceptTcpClientAsync();
-            await Task.Delay(100);
-            Console.WriteLine($"Established Tcp connection #{clientNumber}");
-            ListenV2(client, clientNumber);
-            ++clientNumber;
+            _server.Start();
+            Console.WriteLine($"Listing on {_server.LocalEndpoint}");
+            int clientNumber = 0;
+            while (true)
+            {
+                var client = await _server.AcceptTcpClientAsync();
+                await Task.Delay(100);
+                Console.WriteLine($"Established Tcp connection #{clientNumber}");
+                ListenV2(client, clientNumber);
+                ++clientNumber;
+            }
         }
     }
 

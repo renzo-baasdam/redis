@@ -22,6 +22,7 @@ public class RespParser
         await _stream.ReadAsync(buffer);
         int offset = 0;
         var bufferLastIndex = Array.IndexOf(buffer, (byte)0) - 1;
+        Console.WriteLine($"Stream read length: {bufferLastIndex}");
         while (offset < bufferLastIndex)
         {
             (MessageV2? msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
