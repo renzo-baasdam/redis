@@ -35,7 +35,7 @@ public partial class RedisServer : IDisposable
         if (DatabasePath is not null)
             LoadDatabase();
         if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
-            Connect(masterPort);
+            Task.Run(() => Connect(masterPort));
         await StartServer();
 
         void LoadDatabase()
@@ -65,13 +65,13 @@ public partial class RedisServer : IDisposable
                 var client = await _server.AcceptTcpClientAsync();
                 await Task.Delay(100);
                 Console.WriteLine($"Established Tcp connection #{clientNumber}");
-                ListenV2(client, clientNumber);
+                Task.Run(() => ListenV2(client, clientNumber));
                 ++clientNumber;
             }
         }
     }
 
-    private async void Connect(int masterPort)
+    private async Task Connect(int masterPort)
     {
         try
         {
@@ -95,7 +95,7 @@ public partial class RedisServer : IDisposable
             await ListenOnceV2(parser, stream, client, -1);
             await ListenOnceV2(parser, stream, client, -1);
             await Console.Out.WriteLineAsync("Finished handling RDB file.");
-            ListenV2(Master!, -1);
+            Task.Run(() => ListenV2(Master!, -1));
         }
         catch (Exception ex)
         {

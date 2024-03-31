@@ -10,7 +10,7 @@ using System.Text;
 namespace Redis.Server;
 public partial class RedisServer : IDisposable
 {
-    async void ListenV2(TcpClient client, int socketNumber)
+    async Task ListenV2(TcpClient client, int socketNumber)
     {
         var stream = client.GetStream();
         var parser = new RespParser(stream);
@@ -95,7 +95,7 @@ public partial class RedisServer : IDisposable
                 Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[3]))
             }
             : new RedisValue() { Value = value };
-        Propagate(message);
+        Task.Run(() => Propagate(message));
         return new SimpleStringMessage("OK");
     }
 
