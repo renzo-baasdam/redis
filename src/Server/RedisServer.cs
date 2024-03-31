@@ -88,6 +88,7 @@ public partial class RedisServer : IDisposable
             await Send(stream, new ArrayMessage("PSYNC", "?", "-1" ));
             await ListenOnceV2(parser, stream, client, -1);
             await ListenOnceV2(parser, stream, client, -1);
+            await Console.Out.WriteLineAsync("Finished handling RDB file.");
             ListenV2(Master!, -1);
         }
         catch (Exception ex)
