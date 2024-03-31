@@ -50,7 +50,8 @@ public partial class RedisServer : IDisposable
         }
         if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
         {
-            Connect(masterPort);
+            await Connect(masterPort);
+            ListenV2(Master!, -1);
         }
         _server.Start();
         Console.WriteLine($"Listing on {_server.LocalEndpoint}");
@@ -64,7 +65,7 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    private async void Connect(int masterPort)
+    private async Task Connect(int masterPort)
     {
         try
         {
@@ -87,7 +88,6 @@ public partial class RedisServer : IDisposable
             await Send(stream, new ArrayMessage("PSYNC", "?", "-1" ));
             await ListenOnceV2(parser, stream, client, -1);
             await ListenOnceV2(parser, stream, client, -1);
-            ListenV2(Master, -1);
         }
         catch (Exception ex)
         {
