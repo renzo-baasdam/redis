@@ -7,6 +7,12 @@ internal static class StringExtensions
     internal static string AsArgumentString(this string str) => $"--{str}";
     internal static string AsSimpleString(this string str) => $"+{str}\r\n";
     internal static string AsBulkString(this string str) => $"${str.Length}\r\n{str}\r\n";
+    internal static byte[] AsBulkString(this byte[] bytes)
+    {
+        var prefix = $"${bytes.Length}\r\n".AsUtf8();
+        var postfix = "\r\n".AsUtf8();
+        return prefix.Concat(bytes).Concat(postfix).ToArray();
+    }
     internal static string AsArrayString(this IList<MessageV2> values)
     {
         var sb = new StringBuilder();
