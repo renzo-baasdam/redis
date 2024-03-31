@@ -1,3 +1,4 @@
+using Redis.Extensions;
 using System;
 using System.Text;
 
@@ -45,6 +46,7 @@ public class RespParser
         return (new SimpleStringMessage(value), end + 2);
     }
 
+    private readonly byte[] RedisMagicBytes = new byte[] { 52, 45, 44, 49, 53 };
     public (MessageV2, int) ParseBulkString(byte[] buffer, int bufferLastIndex, int offset)
     {
         int length = 0;
@@ -61,6 +63,8 @@ public class RespParser
             ++end;
         }
         if (end == bufferLastIndex) throw new InvalidOperationException($"Reached end of buffer before finding an \\r\\n.");
+        if (buffer[(end + 2)..(end + 2 + 5)].AsUtf8() == "REDIS")
+            return (new RdbFileMessage(buffer[(end + 2)..(end + 2 + length)]), end + 2 + length);
         if ((char)buffer[end + 2 + length] != '\r' || (char)buffer[end + 2 + length + 1] != '\n')
             throw new InvalidOperationException($"Bulk string does not end with \\r\\n.");
         var value = Encoding.UTF8.GetString(buffer, end + 2, length);

@@ -181,7 +181,7 @@ public partial class RedisServer : IDisposable
         if (args.Length >= 1 && int.TryParse(args[1], out int offset))
         {
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
-            var rdbResponse = new BulkStringBytesMessage(bytes);
+            var rdbResponse = new RdbFileMessage(bytes);
             return new List<MessageV2>() { initialResponse, rdbResponse };
         }
         return new List<MessageV2>() { new NullBulkStringMessage() };
