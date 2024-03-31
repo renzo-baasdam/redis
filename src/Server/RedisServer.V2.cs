@@ -19,6 +19,7 @@ public partial class RedisServer : IDisposable
             try
             {
                 await ListenOnceV2(parser, stream, client, socketNumber);
+                await Task.Delay(100);
             }
             catch (Exception ex)
             {
