@@ -69,7 +69,7 @@ public partial class RedisServer : IDisposable
                 await Task.Delay(100);
                 Console.WriteLine($"Established Tcp connection #{clientNumber}");
 
-                var thread = new Thread(async () => await ListenV2(client, clientNumber));
+                var thread = new Thread(async () => await ListenV2(client, clientNumber, $"Client no. {clientNumber}."));
                 thread.Start();
 
                 ++clientNumber;
@@ -100,9 +100,9 @@ public partial class RedisServer : IDisposable
             await Send(stream, new ArrayMessage("PSYNC", "?", "-1" ));
             await ListenOnceV2(parser, stream, client, -1);
             await ListenOnceV2(parser, stream, client, -1);
-            await Console.Out.WriteLineAsync("Finished handling RDB file.");
+            Console.WriteLine("Finished handling RDB file.");
 
-            var thread = new Thread(async () => await ListenV2(Master!, -1));
+            var thread = new Thread(async () => await ListenV2(Master!, -1, $"Master client"));
             thread.Start();
         }
         catch (Exception ex)

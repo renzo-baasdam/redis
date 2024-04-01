@@ -14,12 +14,12 @@ public class RespParser
         _stream = stream;
     }
 
-    public async Task<MessageV2?> ReadMessage()
+    public async Task<MessageV2?> ReadMessage(string context = "default")
     {
         if (_bufferedMessages.Any()) return _bufferedMessages.Dequeue();
 
         var buffer = new byte[1024];
-        Console.WriteLine($"Ready to read a message!");
+        Console.WriteLine($"{context}: Ready to read a message!");
         await _stream.ReadAsync(buffer);
         int offset = 0;
         var bufferLastIndex = Array.IndexOf(buffer, (byte)0) - 1;

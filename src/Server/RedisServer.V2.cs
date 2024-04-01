@@ -10,7 +10,7 @@ using System.Text;
 namespace Redis.Server;
 public partial class RedisServer : IDisposable
 {
-    async Task ListenV2(TcpClient client, int socketNumber)
+    async Task ListenV2(TcpClient client, int socketNumber, string context)
     {
         var stream = client.GetStream();
         var parser = new RespParser(stream);
@@ -18,8 +18,7 @@ public partial class RedisServer : IDisposable
         {
             try
             {
-                await ListenOnceV2(parser, stream, client, socketNumber);
-                await Task.Delay(10);
+                await ListenOnceV2(parser, stream, client, socketNumber, context);
             }
             catch (Exception ex)
             {
@@ -29,10 +28,11 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    async Task ListenOnceV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber)
+    async Task ListenOnceV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber,
+        string context = "default")
     {
         // parse input as RESP
-        var message = await parser.ReadMessage();
+        var message = await parser.ReadMessage(context);
         if (message is not null)
         {
             Console.WriteLine(@$"Client #{socketNumber}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
