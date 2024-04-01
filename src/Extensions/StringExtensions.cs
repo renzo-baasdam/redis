@@ -12,7 +12,7 @@ internal static class StringExtensions
         var prefix = $"${bytes.Length}\r\n".AsUtf8();
         return prefix.Concat(bytes).ToArray();
     }
-    internal static string AsArrayString(this IList<MessageV2> values)
+    internal static string AsArrayString(this IList<Message> values)
     {
         var sb = new StringBuilder();
         sb.Append($"*{values.Count}\r\n");

@@ -7,14 +7,14 @@ namespace Redis;
 public class RespParser
 {
     private readonly Stream _stream;
-    private readonly Queue<MessageV2> _bufferedMessages = new();
+    private readonly Queue<Message> _bufferedMessages = new();
 
     public RespParser(Stream stream)
     {
         _stream = stream;
     }
 
-    public async Task<MessageV2?> ReadMessage(string context = "default")
+    public async Task<Message?> ReadMessage(string context = "default")
     {
         if (_bufferedMessages.Any()) return _bufferedMessages.Dequeue();
 
@@ -25,13 +25,14 @@ public class RespParser
         {
             Console.WriteLine($"{context}: Closing stream!");
             _stream.Close();
+            return null;
         }
         int offset = 0;
         var bufferLastIndex = Array.IndexOf(buffer, (byte)0) - 1;
         Console.WriteLine($"Stream read length: {bufferLastIndex}");
         while (offset < bufferLastIndex)
         {
-            (MessageV2? msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
+            (Message? msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
             if (msg is not null) _bufferedMessages.Enqueue(msg);
         }
 
@@ -40,7 +41,7 @@ public class RespParser
             : null;
     }
 
-    public (MessageV2, int) ParseSimpleString(byte[] buffer, int bufferLastIndex, int offset)
+    public (Message, int) ParseSimpleString(byte[] buffer, int bufferLastIndex, int offset)
     {
         int end = offset + 1;
         while (end < bufferLastIndex)
@@ -54,7 +55,7 @@ public class RespParser
     }
 
     private readonly byte[] RedisMagicBytes = new byte[] { 52, 45, 44, 49, 53 };
-    public (MessageV2, int) ParseBulkString(byte[] buffer, int bufferLastIndex, int offset)
+    public (Message, int) ParseBulkString(byte[] buffer, int bufferLastIndex, int offset)
     {
         int length = 0;
         int end = offset + 1;
@@ -78,7 +79,7 @@ public class RespParser
         return (new BulkStringMessage(value), end + 2 + length + 2);
     }
 
-    public (MessageV2, int) ParseArray(byte[] buffer, int bufferLastIndex, int offset)
+    public (Message, int) ParseArray(byte[] buffer, int bufferLastIndex, int offset)
     {
         int length = 0;
         int end = offset + 1;
@@ -92,16 +93,16 @@ public class RespParser
         }
         if (end == bufferLastIndex) throw new InvalidOperationException($"Reached end of buffer before finding an \\r\\n.");
         end = end + 2;
-        var messages = new List<MessageV2>();
+        var messages = new List<Message>();
         for (int i = 0; i < length; i++)
         {
-            (MessageV2? msg, end) = ParseMessage(buffer, bufferLastIndex, end);
+            (Message? msg, end) = ParseMessage(buffer, bufferLastIndex, end);
             if (msg is not null) messages.Add(msg);
         }
         return (new ArrayMessage(messages), end);
     }
 
-    private (MessageV2?, int) ParseMessage(byte[] buffer, int bufferLastIndex, int offset)
+    private (Message?, int) ParseMessage(byte[] buffer, int bufferLastIndex, int offset)
     {
         var header = (char)(buffer[offset]);
         return header switch

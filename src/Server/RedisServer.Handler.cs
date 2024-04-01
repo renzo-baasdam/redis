@@ -10,80 +10,31 @@ using System.Text;
 namespace Redis.Server;
 public partial class RedisServer : IDisposable
 {
-    async Task ListenV2(TcpClient client, int socketNumber, string context)
-    {
-        var stream = client.GetStream();
-        var parser = new RespParser(stream);
-        while (stream.CanRead)
-        {
-            try
-            {
-                await ListenOnceV2(parser, stream, client, socketNumber, context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Caught exception: {ex.Message}");
-                break;
-            }
-        }
-    }
-
-    async void ListenV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber, string context = "default")
-    {
-        while (stream.CanRead)
-        {
-            try
-            {
-                await ListenOnceV2(parser, stream, client, socketNumber, context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Caught exception: {ex.Message}");
-                break;
-            }
-        }
-    }
-
-    async Task ListenOnceV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber,
-        string context = "default")
-    {
-        var message = await parser.ReadMessage(context);
-        if (message is not null)
-        {
-            Console.WriteLine(@$"Client #{socketNumber}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
-            foreach (var output in Handler(message, client))
-            {
-                Console.WriteLine($"Response: {output.ToString().Replace("\r\n", "\\r\\n")}");
-                await stream.WriteAsync(output.ToBytes());
-            }
-        }
-    }
-
-    IList<MessageV2> Handler(MessageV2 message, TcpClient client)
+    IList<Message> Handler(Message message, TcpClient client)
     {
         if (message is ArrayMessage array)
         {
             (var command, var args) = ParseCommand(array);
             var response = command switch
             {
-                "GET" => new List<MessageV2>() { GetV2(args[0]) },
-                "SET" => new List<MessageV2>() { SetV2(args, message) },
-                "ECHO" => new List<MessageV2>() { new BulkStringMessage(args[0]) },
-                "PING" => new List<MessageV2>() { new SimpleStringMessage("PONG") },
-                "KEYS" => new List<MessageV2>() { KeysV2() },
-                "INFO" => new List<MessageV2>() { InfoV2(args) },
-                "CONFIG" => new List<MessageV2>() { ConfigV2(args) },
-                "PSYNC" => PSyncV2(args),
-                "REPLCONF" => ReplConfV2(args, client) is { } msg
-                    ? new List<MessageV2>() { msg }
-                    : new List<MessageV2>(),
-                _ => new List<MessageV2>() { }
+                "GET" => new List<Message>() { Get(args[0]) },
+                "SET" => new List<Message>() { Set(args, message) },
+                "ECHO" => new List<Message>() { new BulkStringMessage(args[0]) },
+                "PING" => new List<Message>() { new SimpleStringMessage("PONG") },
+                "KEYS" => new List<Message>() { Keys() },
+                "INFO" => new List<Message>() { Info(args) },
+                "CONFIG" => new List<Message>() { Config(args) },
+                "PSYNC" => PSync(args),
+                "REPLCONF" => ReplConf(args, client) is { } msg
+                    ? new List<Message>() { msg }
+                    : new List<Message>(),
+                _ => new List<Message>() { }
             };
             return client != Master || command == "REPLCONF"
                 ? response
-                : new List<MessageV2>();
+                : new List<Message>();
         }
-        return new List<MessageV2>();
+        return new List<Message>();
     }
 
     private (string Command, string[] Args) ParseCommand(ArrayMessage message)
@@ -93,7 +44,7 @@ public partial class RedisServer : IDisposable
         return (values[0].ToUpper(), values[1..]);
     }
 
-    private SimpleStringMessage SetV2(string[] args, MessageV2 message)
+    private SimpleStringMessage Set(string[] args, Message message)
     {
         var key = args[0];
         var value = args[1];
@@ -108,23 +59,23 @@ public partial class RedisServer : IDisposable
         return new SimpleStringMessage("OK");
     }
 
-    private BulkStringMessage GetV2(string key)
+    private BulkStringMessage Get(string key)
     {
         if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
             return new BulkStringMessage(value.Value);
         return new NullBulkStringMessage();
     }
 
-    private ArrayMessage KeysV2()
+    private ArrayMessage Keys()
     {
         var keys = _cache
             .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
             .Select(x => new BulkStringMessage(x.Key))
-            .ToList<MessageV2>();
+            .ToList<Message>();
         return new ArrayMessage(keys);
     }
 
-    private BulkStringMessage InfoV2(string[] args)
+    private BulkStringMessage Info(string[] args)
     {
         if (args.Length >= 1 && args[0].ToLower() == "replication")
         {
@@ -137,7 +88,7 @@ public partial class RedisServer : IDisposable
         return new NullBulkStringMessage();
     }
 
-    private ArrayMessage ConfigV2(string[] args)
+    private ArrayMessage Config(string[] args)
     {
         if (args[0].ToUpper() == "GET")
         {
@@ -150,21 +101,21 @@ public partial class RedisServer : IDisposable
             };
             if (value is not null)
             {
-                var pair = new List<MessageV2>() {
+                var pair = new List<Message>() {
                     new BulkStringMessage(key),
                     new BulkStringMessage(value)
                 };
                 return new ArrayMessage(pair);
             }
         }
-        return new ArrayMessage(new List<MessageV2>());
+        return new ArrayMessage(new List<Message>());
     }
 
-    private MessageV2? ReplConfV2(string[] args, TcpClient client)
+    private Message? ReplConf(string[] args, TcpClient client)
     {
         if (args.Length >= 1 && args[0].ToUpper() == "GETACK")
         {
-            var values = new List<MessageV2>() {
+            var values = new List<Message>() {
                 new BulkStringMessage("REPLCONF"),
                 new BulkStringMessage("ACK"),
                 new BulkStringMessage("0"),
@@ -185,15 +136,15 @@ public partial class RedisServer : IDisposable
         return new SimpleStringMessage("OK");
     }
 
-    private List<MessageV2> PSyncV2(string[] args)
+    private List<Message> PSync(string[] args)
     {
         var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
         if (args.Length >= 1 && int.TryParse(args[1], out int offset))
         {
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
             var rdbResponse = new RdbFileMessage(bytes);
-            return new List<MessageV2>() { initialResponse, rdbResponse };
+            return new List<Message>() { initialResponse, rdbResponse };
         }
-        return new List<MessageV2>() { new NullBulkStringMessage() };
+        return new List<Message>() { new NullBulkStringMessage() };
     }
 }
