@@ -20,7 +20,12 @@ public class RespParser
 
         var buffer = new byte[1024];
         Console.WriteLine($"{context}: Ready to read a message!");
-        await _stream.ReadAsync(buffer);
+        var streamResult = await _stream.ReadAsync(buffer);
+        if(streamResult == 0)
+        {
+            Console.WriteLine($"{context}: Closing stream!");
+            _stream.Close();
+        }
         int offset = 0;
         var bufferLastIndex = Array.IndexOf(buffer, (byte)0) - 1;
         Console.WriteLine($"Stream read length: {bufferLastIndex}");
