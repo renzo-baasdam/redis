@@ -28,7 +28,7 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    async Task ListenV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber, string context = "default")
+    async void ListenV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber, string context = "default")
     {
         while (stream.CanRead)
         {
