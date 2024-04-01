@@ -14,7 +14,7 @@ public partial class RedisServer : IDisposable
     {
         var stream = client.GetStream();
         var parser = new RespParser(stream);
-        while (true)
+        while (stream.CanRead)
         {
             try
             {
@@ -31,23 +31,16 @@ public partial class RedisServer : IDisposable
     async Task ListenOnceV2(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber,
         string context = "default")
     {
-        // parse input as RESP
         var message = await parser.ReadMessage(context);
         if (message is not null)
         {
             Console.WriteLine(@$"Client #{socketNumber}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
-            // output string to bytes
             foreach (var output in Handler(message, client))
             {
-                // log and respond
                 Console.WriteLine($"Response: {output.ToString().Replace("\r\n", "\\r\\n")}");
                 await stream.WriteAsync(output.ToBytes());
             }
         }
-        /*else if (message is Response response)
-        {
-            Console.WriteLine(@$"Client #{socketNumber}. Received response: {response.Original.ReplaceLineEndings("\\r\\n")}.");
-        }*/
     }
 
     IList<MessageV2> Handler(MessageV2 message, TcpClient client)
