@@ -18,7 +18,7 @@ public class RespParser
     {
         if (_bufferedMessages.Any()) return _bufferedMessages.Dequeue();
 
-        var buffer = new byte[1024];
+        var buffer = new byte[2048];
         Console.WriteLine($"{context}: Ready to read a message!");
         var streamResult = await _stream.ReadAsync(buffer);
         if(streamResult == 0)
