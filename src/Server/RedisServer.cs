@@ -97,12 +97,15 @@ public partial class RedisServer : IDisposable
             await ListenOnceV2(parser, stream, client, -1);
             await Send(stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
             await ListenOnceV2(parser, stream, client, -1);
-            await Send(stream, new ArrayMessage("PSYNC", "?", "-1" ));
+            await Send(stream, new ArrayMessage("PSYNC", "?", "-1"));
             await ListenOnceV2(parser, stream, client, -1);
             await ListenOnceV2(parser, stream, client, -1);
             Console.WriteLine("Finished handling RDB file.");
-
-            var thread = new Thread(async () => await ListenV2(Master!, -1, $"Master client"));
+            var thread = new Thread(async () =>
+            {
+                await ListenOnceV2(parser, stream, client, -1);
+                await ListenV2(Master!, -1, $"Master client");
+            });
             thread.Start();
         }
         catch (Exception ex)
