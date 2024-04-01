@@ -39,7 +39,7 @@ public partial class RedisServer : IDisposable
             var thread = new Thread(async () => await Connect(masterPort));
             thread.Start();
         }
-        StartServer();
+        await Task.Run(() => StartServer());
 
         void LoadDatabase()
         {
