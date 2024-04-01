@@ -103,7 +103,6 @@ public partial class RedisServer : IDisposable
             Console.WriteLine("Finished handling RDB file.");
             var thread = new Thread(async () =>
             {
-                if(stream.CanRead) await ListenOnceV2(parser, stream, client, -1);
                 await ListenV2(Master!, -1, $"Master client");
             });
             thread.Start();
