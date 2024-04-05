@@ -6,6 +6,7 @@ namespace Redis.Server;
 
 public partial class RedisServer
 {
+    // todo improve, guarantee order
     private async Task Propagate(Message msg)
     {
         foreach (var client in _replicas)
