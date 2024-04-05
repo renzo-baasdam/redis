@@ -21,7 +21,9 @@ public class RespParser
         var buffer = new byte[2048];
         Console.WriteLine($"{context}: Ready to read a message!");
         var streamResult = await _stream.ReadAsync(buffer);
-        if(streamResult == 0)
+        Console.WriteLine($"{context}: Read {streamResult} bytes!");
+
+        if (streamResult == 0)
         {
             Console.WriteLine($"{context}: Closing stream!");
             _stream.Close();

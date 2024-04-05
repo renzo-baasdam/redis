@@ -100,6 +100,7 @@ public partial class RedisServer : IDisposable
             await ListenOnce(parser, stream, client, -1);
             await ListenOnce(parser, stream, client, -1);
             Console.WriteLine("Finished handling RDB file.");
+            await ListenOnce(parser, stream, client, -1);
             Task.Run(() => Listen(parser, stream, client, -1, $"Client #{-1}"));
         }
         catch (Exception ex)
