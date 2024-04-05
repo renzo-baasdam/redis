@@ -36,8 +36,7 @@ public partial class RedisServer : IDisposable
             LoadDatabase();
         if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
         {
-            var thread = new Thread(async () => await Connect(masterPort));
-            thread.Start();
+            Connect(masterPort);
         }
         await Task.Run(() => StartServer());
 
@@ -66,17 +65,17 @@ public partial class RedisServer : IDisposable
             while (true)
             {
                 var client = await _server.AcceptTcpClientAsync();
+                var stream = client.GetStream();
+                var parser = new RespParser(stream);
                 Console.WriteLine($"Established Tcp connection #{clientNumber}");
-
-                var thread = new Thread(async () => await Listen(client, clientNumber, $"Client #{clientNumber}"));
-                thread.Start();
+                Listen(parser, stream, client, $"Client #{clientNumber}");
 
                 ++clientNumber;
             }
         }
     }
 
-    private async Task Connect(int masterPort)
+    private async void Connect(int masterPort)
     {
         try
         {
@@ -91,17 +90,16 @@ public partial class RedisServer : IDisposable
 
             // handshake
             await Send(stream, new ArrayMessage("PING"));
-            await ListenOnce(parser, stream, client, -1);
+            await ListenOnce(parser, stream, client, "Master client");
             await Send(stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
-            await ListenOnce(parser, stream, client, -1);
+            await ListenOnce(parser, stream, client, "Master client");
             await Send(stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
-            await ListenOnce(parser, stream, client, -1);
+            await ListenOnce(parser, stream, client, "Master client");
             await Send(stream, new ArrayMessage("PSYNC", "?", "-1"));
-            await ListenOnce(parser, stream, client, -1);
-            await ListenOnce(parser, stream, client, -1);
-            Console.WriteLine("Finished handling RDB file.");
-            await ListenOnce(parser, stream, client, -1);
-            Task.Run(() => Listen(parser, stream, client, -1, $"Client #{-1}"));
+            await ListenOnce(parser, stream, client, "Master client");
+            await ListenOnce(parser, stream, client, "Master client");
+            Console.WriteLine("Replica has finished handling RDB file.");
+            Listen(parser, stream, client, "Master client");
         }
         catch (Exception ex)
         {
@@ -110,19 +108,18 @@ public partial class RedisServer : IDisposable
 
         async Task Send(Stream stream, ArrayMessage msg)
         {
-            Console.WriteLine($"Sending cmd to master: {msg.ToString().Replace("\r\n", "\\r\\n")}");
+            Console.WriteLine($"Master client. Sent request: {msg.ToString().Replace("\r\n", "\\r\\n")}");
             await stream.WriteAsync(msg.ToBytes());
         }
     }
-    async Task Listen(TcpClient client, int socketNumber, string context)
+
+    async void Listen(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
     {
-        var stream = client.GetStream();
-        var parser = new RespParser(stream);
         while (stream.CanRead)
         {
             try
             {
-                await ListenOnce(parser, stream, client, socketNumber, context);
+                await ListenOnce(parser, stream, client, context);
             }
             catch (Exception ex)
             {
@@ -132,32 +129,15 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    async void Listen(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber, string context = "default")
-    {
-        while (stream.CanRead)
-        {
-            try
-            {
-                await ListenOnce(parser, stream, client, socketNumber, context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Caught exception: {ex.Message}");
-                break;
-            }
-        }
-    }
-
-    async Task ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, int socketNumber,
-        string context = "default")
+    async Task ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
     {
         var message = await parser.ReadMessage(context);
         if (message is not null)
         {
-            Console.WriteLine(@$"Client #{socketNumber}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
+            Console.WriteLine($"{context}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
             foreach (var output in Handler(message, client))
             {
-                Console.WriteLine($"Response: {output.ToString().Replace("\r\n", "\\r\\n")}");
+                Console.WriteLine($"{context}. Sent Response: {output.ToString().ReplaceLineEndings("\\r\\n")}");
                 await stream.WriteAsync(output.ToBytes());
             }
         }

@@ -19,19 +19,14 @@ public class RespParser
         if (_bufferedMessages.Any()) return _bufferedMessages.Dequeue();
 
         var buffer = new byte[2048];
-        Console.WriteLine($"{context}: Ready to read a message!");
-        var streamResult = await _stream.ReadAsync(buffer);
-        Console.WriteLine($"{context}: Read {streamResult} bytes!");
-
-        if (streamResult == 0)
+        var bufferLastIndex = await _stream.ReadAsync(buffer);
+        if (bufferLastIndex == 0)
         {
             Console.WriteLine($"{context}: Closing stream!");
             _stream.Close();
             return null;
         }
         int offset = 0;
-        var bufferLastIndex = Array.IndexOf(buffer, (byte)0) - 1;
-        Console.WriteLine($"Stream read length: {bufferLastIndex}");
         while (offset < bufferLastIndex)
         {
             (Message? msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
