@@ -14,7 +14,7 @@ public partial class RedisServer
             try
             {
                 var stream = client.GetStream();
-                Console.WriteLine($"Propagating cmd to replica.");
+                Console.WriteLine($"Propagating cmd to replica: {msg.ToString().ReplaceLineEndings("\\r\\n")}");
                 await stream.WriteAsync(msg.ToBytes());
             }
             catch (Exception ex)
