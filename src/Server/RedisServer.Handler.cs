@@ -23,6 +23,7 @@ public partial class RedisServer
                 "PING" => new List<Message>() { new SimpleStringMessage("PONG") },
                 "KEYS" => new List<Message>() { Keys() },
                 "INFO" => new List<Message>() { Info(args) },
+                "WAIT" => new List<Message>() { Wait(args) },
                 "CONFIG" => new List<Message>() { Config(args) },
                 "PSYNC" => PSync(args),
                 "REPLCONF" => ReplConf(args, client) is { } msg
@@ -86,6 +87,15 @@ public partial class RedisServer
             return new BulkStringMessage(sb.ToString());
         }
         return new NullBulkStringMessage();
+    }
+
+    private IntegerMessage Wait(string[] args)
+    {
+        if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) & int.TryParse(args[0], out int timeout))
+        {
+            return new IntegerMessage(0);
+        }
+        return new IntegerMessage(0);
     }
 
     private ArrayMessage Config(string[] args)
