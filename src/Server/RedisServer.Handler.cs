@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 
 namespace Redis.Server;
-public partial class RedisServer : IDisposable
+public partial class RedisServer
 {
     IList<Message> Handler(Message message, TcpClient client)
     {
@@ -118,7 +118,7 @@ public partial class RedisServer : IDisposable
             var values = new List<Message>() {
                 new BulkStringMessage("REPLCONF"),
                 new BulkStringMessage("ACK"),
-                new BulkStringMessage("0"),
+                new BulkStringMessage(Offset.ToString()),
             };
             return new ArrayMessage(values);
         }

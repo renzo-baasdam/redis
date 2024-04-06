@@ -20,6 +20,8 @@ public partial class RedisServer : IDisposable
     private readonly RedisConfig _config = new();
     private readonly TcpListener _server = new(IPAddress.Any, 6379);
     private readonly List<TcpClient> _replicas = new();
+    private int Offset { get; set; }
+
     private TcpClient? Master { get; set; }
     private RedisDatabase? _database { get; set; }
 
@@ -99,7 +101,8 @@ public partial class RedisServer : IDisposable
             await ListenOnce(parser, stream, client, "Master client");
             await ListenOnce(parser, stream, client, "Master client");
             Console.WriteLine("Replica has finished handling RDB file.");
-            Listen(parser, stream, client, "Master client");
+            Offset = 0;
+            ReplicaListener(parser, stream, client, "Master client");
         }
         catch (Exception ex)
         {
@@ -110,6 +113,22 @@ public partial class RedisServer : IDisposable
         {
             Console.WriteLine($"Master client. Sent request: {msg.ToString().Replace("\r\n", "\\r\\n")}");
             await stream.WriteAsync(msg.ToBytes());
+        }
+    }
+
+    async void ReplicaListener(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    {
+        while (stream.CanRead)
+        {
+            try
+            {
+                Offset += await ListenOnce(parser, stream, client, context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Caught exception: {ex.Message}");
+                break;
+            }
         }
     }
 
@@ -129,7 +148,7 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    async Task ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    async Task<int> ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
     {
         var message = await parser.ReadMessage(context);
         if (message is not null)
@@ -141,6 +160,7 @@ public partial class RedisServer : IDisposable
                 await stream.WriteAsync(output.ToBytes());
             }
         }
+        return message?.Count ?? 0;
     }
 
     public void Dispose()
