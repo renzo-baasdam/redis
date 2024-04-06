@@ -93,7 +93,7 @@ public partial class RedisServer
     {
         if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) & int.TryParse(args[0], out int timeout))
         {
-            return new IntegerMessage(0);
+            return new IntegerMessage(_replicas.Count);
         }
         return new IntegerMessage(0);
     }
