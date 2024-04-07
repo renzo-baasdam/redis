@@ -23,7 +23,7 @@ public partial class RedisServer : IDisposable
         await StartServer();
     }
 
-    async Task StartServer()
+    protected async Task StartServer()
     {
         _server.Start();
         Console.WriteLine($"Listing on {_server.LocalEndpoint}");

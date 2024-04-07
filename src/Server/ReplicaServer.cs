@@ -13,6 +13,14 @@ public partial class ReplicaServer : RedisServer
     {
     }
 
+    public async override Task Start()
+    {
+        Console.WriteLine("Starting Redis...");
+        LoadDatabase();
+        Handshake(_config.MasterPort!.Value);
+        await StartServer();
+    }
+
     private async void Handshake(int masterPort)
     {
         try
