@@ -8,9 +8,10 @@ using System.Net.Sockets;
 using System.Text;
 
 namespace Redis.Server;
+
 public partial class RedisServer
 {
-    IList<Message> Handler(Message message, TcpClient client)
+    protected virtual IList<Message> Handler(Message message, TcpClient client)
     {
         if (message is ArrayMessage array)
         {
@@ -31,14 +32,12 @@ public partial class RedisServer
                     : new List<Message>(),
                 _ => new List<Message>() { }
             };
-            return client != Master || command == "REPLCONF"
-                ? response
-                : new List<Message>();
+            return response;
         }
         return new List<Message>();
     }
 
-    private (string Command, string[] Args) ParseCommand(ArrayMessage message)
+    protected (string Command, string[] Args) ParseCommand(ArrayMessage message)
     {
         if (message.Values.Any(x => x is not BulkStringMessage)) return ("UNKNOWN", Array.Empty<string>());
         var values = message.Values.Select(x => ((BulkStringMessage)x).Value).ToArray();
@@ -121,17 +120,8 @@ public partial class RedisServer
         return new ArrayMessage(new List<Message>());
     }
 
-    private Message? ReplConf(string[] args, TcpClient client)
+    protected virtual Message? ReplConf(string[] args, TcpClient client)
     {
-        if (args.Length >= 1 && args[0].ToUpper() == "GETACK")
-        {
-            var values = new List<Message>() {
-                new BulkStringMessage("REPLCONF"),
-                new BulkStringMessage("ACK"),
-                new BulkStringMessage(Offset.ToString()),
-            };
-            return new ArrayMessage(values);
-        }
         if (args.Length >= 1 && args[0].ToLower() == "ACK")
         {
             return null;

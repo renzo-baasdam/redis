@@ -26,7 +26,9 @@ public static class Program
             }
         }
 
-        var server = new RedisServer(conf);
+        RedisServer server = conf.Role == "master"
+            ? new RedisServer(conf)
+            : new ReplicaServer(conf);
         try
         {
             await server.Start();

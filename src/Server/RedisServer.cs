@@ -16,123 +16,31 @@ internal record RedisValue
 
 public partial class RedisServer : IDisposable
 {
-    private readonly Dictionary<string, RedisValue> _cache = new();
-    private readonly RedisConfig _config = new();
-    private readonly TcpListener _server = new(IPAddress.Any, 6379);
-    private readonly List<TcpClient> _replicas = new();
-    private int Offset { get; set; }
-
-    private TcpClient? Master { get; set; }
-    private RedisDatabase? _database { get; set; }
-
-    public RedisServer(RedisConfig config)
-    {
-        _config = config;
-        _server = new(IPAddress.Any, _config.Port);
-    }
-
-    public async Task Start()
+    public async virtual Task Start()
     {
         Console.WriteLine("Starting Redis...");
-        if (DatabasePath is not null)
-            LoadDatabase();
-        if (_config.Role == "slave" && _config.MasterPort is { } masterPort)
-        {
-            Connect(masterPort);
-        }
-        await Task.Run(() => StartServer());
-
-        void LoadDatabase()
-        {
-            try
-            {
-                Console.WriteLine($"Loading database from: {DatabasePath}");
-                var bytes = File.ReadAllBytes(DatabasePath);
-                _database = RedisDatabase.FromBytes(bytes);
-                foreach (var kv in _database.Databases[0].Values)
-                    _cache[kv.Key] = kv.Value;
-                Console.WriteLine($"Loaded database successfully.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading database: {ex.Message}");
-            }
-        }
-
-        async Task StartServer()
-        {
-            _server.Start();
-            Console.WriteLine($"Listing on {_server.LocalEndpoint}");
-            int clientNumber = 0;
-            while (true)
-            {
-                var client = await _server.AcceptTcpClientAsync();
-                var stream = client.GetStream();
-                var parser = new RespParser(stream);
-                Console.WriteLine($"Established Tcp connection #{clientNumber}");
-                Listen(parser, stream, client, $"Client #{clientNumber}");
-
-                ++clientNumber;
-            }
-        }
+        LoadDatabase();
+        await StartServer();
     }
 
-    private async void Connect(int masterPort)
+    async Task StartServer()
     {
-        try
+        _server.Start();
+        Console.WriteLine($"Listing on {_server.LocalEndpoint}");
+        int clientNumber = 0;
+        while (true)
         {
-            var client = new TcpClient();
-            var endpoint = new IPEndPoint(LocalhostIP, masterPort);
-            await client.ConnectAsync(endpoint);
-
+            var client = await _server.AcceptTcpClientAsync();
             var stream = client.GetStream();
             var parser = new RespParser(stream);
+            Console.WriteLine($"Established Tcp connection #{clientNumber}");
+            Listen(parser, stream, client, $"Client #{clientNumber}");
 
-            Master = client;
-
-            // handshake
-            await Send(stream, new ArrayMessage("PING"));
-            await ListenOnce(parser, stream, client, "Master client");
-            await Send(stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
-            await ListenOnce(parser, stream, client, "Master client");
-            await Send(stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
-            await ListenOnce(parser, stream, client, "Master client");
-            await Send(stream, new ArrayMessage("PSYNC", "?", "-1"));
-            await ListenOnce(parser, stream, client, "Master client");
-            await ListenOnce(parser, stream, client, "Master client");
-            Console.WriteLine("Replica has finished handling RDB file.");
-            Offset = 0;
-            ReplicaListener(parser, stream, client, "Master client");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
-
-        async Task Send(Stream stream, ArrayMessage msg)
-        {
-            Console.WriteLine($"Master client. Sent request: {msg.ToString().Replace("\r\n", "\\r\\n")}");
-            await stream.WriteAsync(msg.ToBytes());
+            ++clientNumber;
         }
     }
 
-    async void ReplicaListener(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
-    {
-        while (stream.CanRead)
-        {
-            try
-            {
-                Offset += await ListenOnce(parser, stream, client, context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Caught exception: {ex.Message}");
-                break;
-            }
-        }
-    }
-
-    async void Listen(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    private async void Listen(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
     {
         while (stream.CanRead)
         {
@@ -148,7 +56,7 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    async Task<int> ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    protected async Task<int> ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
     {
         var message = await parser.ReadMessage(context);
         if (message is not null)
@@ -163,12 +71,11 @@ public partial class RedisServer : IDisposable
         return message?.Count ?? 0;
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         foreach (var replica in _replicas)
         {
             replica.Dispose();
         }
-        Master?.Dispose();
     }
 }
