@@ -63,8 +63,9 @@ public partial class ReplicaServer : RedisServer
     protected override IList<Message> Handler(Message message, TcpClient client)
     {
         // Replica should not send response to Master unless it is a REPLCONF response
+        var result = base.Handler(message, client);
         return client != Master || IsReplconfCommand(message)
-                ? base.Handler(message, client)
+                ? result
                 : new List<Message>();
 
         bool IsReplconfCommand(Message msg)
