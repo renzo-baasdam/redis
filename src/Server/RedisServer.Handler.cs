@@ -94,6 +94,10 @@ public partial class RedisServer
         {
             return new IntegerMessage(_replicas.Count);
         }
+        // send replconf getack * to replica
+        // replica sends replconf ack [offset] <- we know all previous set commands have been processed
+        // wait till event raised
+
         return new IntegerMessage(0);
     }
 
