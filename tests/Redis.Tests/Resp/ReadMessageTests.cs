@@ -17,7 +17,7 @@ public class ReadMessageTests
         (await parser.ReadMessage()).Should().BeEquivalentTo(new SimpleStringMessage("One"));
         (await parser.ReadMessage()).Should().BeEquivalentTo(new BulkStringMessage("123456789012"));
         (await parser.ReadMessage()).Should().BeEquivalentTo(new ArrayMessage(
-            new List<MessageV2>()
+            new List<Message>()
             {
                 new SimpleStringMessage("Three"),
                 new BulkStringMessage("Four"),
