@@ -114,7 +114,8 @@ public partial class RedisServer
             };
             if (value is not null)
             {
-                var pair = new List<Message>() {
+                var pair = new List<Message>()
+                {
                     new BulkStringMessage(key),
                     new BulkStringMessage(value)
                 };
@@ -126,8 +127,9 @@ public partial class RedisServer
 
     protected virtual Message? ReplConf(string[] args, TcpClient client)
     {
-        if (args.Length >= 1 && args[0].ToLower() == "ACK")
+        if (args.Length >= 1 && args[0].ToLower() == "ack")
         {
+            OnRaiseReplConfEvent(new ReplConfEvent());
             return null;
         }
         if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var port))
