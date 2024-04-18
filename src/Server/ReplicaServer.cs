@@ -1,4 +1,3 @@
-using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -13,7 +12,7 @@ public partial class ReplicaServer : RedisServer
     {
     }
 
-    public async override Task Start()
+    public override async Task Start()
     {
         Console.WriteLine("Starting Redis...");
         LoadDatabase();
@@ -72,7 +71,7 @@ public partial class ReplicaServer : RedisServer
             => msg is ArrayMessage arrayMsg && ParseCommand(arrayMsg).Command == "REPLCONF";
     }
 
-    async void ReplicaListener(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    private async void ReplicaListener(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
     {
         while (stream.CanRead)
         {

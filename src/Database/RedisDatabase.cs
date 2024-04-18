@@ -15,50 +15,53 @@ internal partial class RedisDatabase
         return db;
     }
 
-    internal bool ParseOpcode(ref int index, byte[] bytes)
+    private bool ParseOpcode(ref int index, byte[] bytes)
     {
-        if (bytes[index] == 0xFE) // parse database selector
+        switch (bytes[index])
         {
-            var databaseNumber = bytes[++index];
-            if (bytes[++index] != 0xFB) throw new InvalidDataException("Expected 0xFB, the Resizedb information.");
-            ++index;
-            (var databaseHashTableSize, index) = DecodeLength(index, bytes);
-            (var expiryHashTableSize, index) = DecodeLength(index, bytes);
-            var db = new Database(databaseNumber, databaseHashTableSize, expiryHashTableSize);
-
-            while (HasNextKeyValue(bytes[index]))
+            // parse database selector
+            case 0xFE:
             {
-                // parse expiration
-                DateTime? expiration = null;
-                if (bytes[index] == (byte)0xFD)
-                {
-                    var timeAsInt = BitConverter.ToInt32(bytes, ++index);
-                    index += 4;
-                    expiration = DateTimeOffset.FromUnixTimeSeconds(timeAsInt).UtcDateTime;
-                }
-                if (bytes[index] == (byte)0xFC)
-                {
-                    var timeAsInt = BitConverter.ToInt64(bytes, ++index);
-                    index += 8;
-                    expiration = DateTimeOffset.FromUnixTimeMilliseconds(timeAsInt).UtcDateTime;
-                };
+                var databaseNumber = bytes[++index];
+                if (bytes[++index] != 0xFB) throw new InvalidDataException("Expected 0xFB, the Resizedb information.");
+                ++index;
+                (var databaseHashTableSize, index) = DecodeLength(index, bytes);
+                (var expiryHashTableSize, index) = DecodeLength(index, bytes);
+                var db = new Database(databaseNumber, databaseHashTableSize, expiryHashTableSize);
 
-                // parse key value pair
-                var valueType = bytes[index++];
-                var key = DecodeLengthPrefixedString(ref index, bytes);
-                var value = DecodeValue(ref index, bytes, valueType);
-                db.Values[key] = new() { Value = value, Expiration = expiration };
+                while (HasNextKeyValue(bytes[index]))
+                {
+                    // parse expiration
+                    DateTime? expiration = null;
+                    if (bytes[index] == (byte)0xFD)
+                    {
+                        var timeAsInt = BitConverter.ToInt32(bytes, ++index);
+                        index += 4;
+                        expiration = DateTimeOffset.FromUnixTimeSeconds(timeAsInt).UtcDateTime;
+                    }
+                    if (bytes[index] == (byte)0xFC)
+                    {
+                        var timeAsInt = BitConverter.ToInt64(bytes, ++index);
+                        index += 8;
+                        expiration = DateTimeOffset.FromUnixTimeMilliseconds(timeAsInt).UtcDateTime;
+                    };
+
+                    // parse key value pair
+                    var valueType = bytes[index++];
+                    var key = DecodeLengthPrefixedString(ref index, bytes);
+                    var value = DecodeValue(ref index, bytes, valueType);
+                    db.Values[key] = new() { Value = value, Expiration = expiration };
+                }
+                Databases.Add(db);
+                break;
             }
-            Databases.Add(db);
+            case 0xFF:
+                return false;
+            default:
+                ++index;
+                break;
         }
-        else if (bytes[index] == 0xFF)
-        {
-            return false;
-        }
-        else
-        {
-            ++index;
-        }
+
         return true;
     }
 

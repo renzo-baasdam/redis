@@ -16,7 +16,7 @@ internal record RedisValue
 
 public partial class RedisServer : IDisposable
 {
-    public async virtual Task Start()
+    public virtual async Task Start()
     {
         Console.WriteLine("Starting Redis...");
         LoadDatabase();
