@@ -52,6 +52,7 @@ public class RespParser
     }
 
     private readonly byte[] RedisMagicBytes = new byte[] { 52, 45, 44, 49, 53 };
+
     public (Message, int) ParseBulkString(byte[] buffer, int bufferLastIndex, int offset)
     {
         int length = 0;

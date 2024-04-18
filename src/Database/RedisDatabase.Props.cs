@@ -10,6 +10,7 @@ internal partial class RedisDatabase
     /// Auxiliary fields
     /// </summary>
     public string RedisVersion { get; set; } = string.Empty;
+
     public int RedisArchitecture { get; set; } = 0;
     public DateTime CreationTime { get; set; }
     public string UsedMemory { get; set; } = string.Empty;

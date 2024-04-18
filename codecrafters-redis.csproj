@@ -1,29 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>codecrafters_redis</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace>codecrafters_redis</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="src\Network\**" />
-    <Compile Remove="tests\**" />
-    <EmbeddedResource Remove="src\Network\**" />
-    <EmbeddedResource Remove="tests\**" />
-    <None Remove="src\Network\**" />
-    <None Remove="tests\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="src\Network\**"/>
+        <Compile Remove="tests\**"/>
+        <EmbeddedResource Remove="src\Network\**"/>
+        <EmbeddedResource Remove="tests\**"/>
+        <None Remove="src\Network\**"/>
+        <None Remove="tests\**"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
-  </ItemGroup>
-	
-	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-			<_Parameter1>Redis.Tests</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>Redis.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
 </Project>

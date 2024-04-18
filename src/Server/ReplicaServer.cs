@@ -64,8 +64,8 @@ public partial class ReplicaServer : RedisServer
         // Replica should not send response to Master unless it is a REPLCONF response
         var result = base.Handler(message, client);
         return client != Master || IsReplconfCommand(message)
-                ? result
-                : new List<Message>();
+            ? result
+            : new List<Message>();
 
         bool IsReplconfCommand(Message msg)
             => msg is ArrayMessage arrayMsg && ParseCommand(arrayMsg).Command == "REPLCONF";

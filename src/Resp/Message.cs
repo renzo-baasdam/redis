@@ -34,9 +34,10 @@ public sealed record ArrayMessage(List<Message> Values) : Message
 {
     public ArrayMessage(params string[] values)
         : this(values
-              .Select(val => new BulkStringMessage(val))
-              .ToList<Message>())
-    { }
+            .Select(val => new BulkStringMessage(val))
+            .ToList<Message>())
+    {
+    }
 
     public override string ToString() => Values.AsArrayString();
 }

@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 
 namespace Redis.Server;
+
 public partial class RedisServer
 {
     public void LoadDatabase()

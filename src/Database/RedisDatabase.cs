@@ -44,7 +44,7 @@ internal partial class RedisDatabase
                         var timeAsInt = BitConverter.ToInt64(bytes, ++index);
                         index += 8;
                         expiration = DateTimeOffset.FromUnixTimeMilliseconds(timeAsInt).UtcDateTime;
-                    };
+                    }
 
                     // parse key value pair
                     var valueType = bytes[index++];
@@ -99,9 +99,9 @@ internal partial class RedisDatabase
         static uint Length2(byte[] bytes, int i) => (((uint)(bytes[i] & 0b11_1111) << 8) | bytes[i + 1]);
 
         static uint Length5(byte[] bytes, int i) => (uint)(0
-            | (bytes[i + 1] << 24)
-            | (bytes[i + 2] << 16)
-            | (bytes[i + 3] << 08)
-            | (bytes[i + 4] << 00));
+                                                           | (bytes[i + 1] << 24)
+                                                           | (bytes[i + 2] << 16)
+                                                           | (bytes[i + 3] << 08)
+                                                           | (bytes[i + 4] << 00));
     }
 }

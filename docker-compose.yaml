@@ -17,6 +17,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["--port", "6381", "--replicaof", "redis", "6379"]
+    command: [ "--port", "6381", "--replicaof", "redis", "6379" ]
     ports:
       - "6381:6381"

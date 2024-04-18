@@ -40,7 +40,8 @@ public class Length_decoder
     {
         int index = 0;
         uint header = 0b1000_0000;
-        var encoded = new byte[] {
+        var encoded = new byte[]
+        {
             (byte)header,
             (byte)(value >> 24 & 0b1111_1111),
             (byte)(value >> 16 & 0b1111_1111),

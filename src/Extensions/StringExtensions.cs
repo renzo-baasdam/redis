@@ -8,11 +8,13 @@ internal static class StringExtensions
     internal static string AsSimpleString(this string str) => $"+{str}\r\n";
     internal static string AsBulkString(this string str) => $"${str.Length}\r\n{str}\r\n";
     internal static string AsInteger(this int val) => $":{val}\r\n";
+
     internal static byte[] AsRdbFile(this byte[] bytes)
     {
         var prefix = $"${bytes.Length}\r\n".AsUtf8();
         return prefix.Concat(bytes).ToArray();
     }
+
     internal static string AsArrayString(this IList<Message> values)
     {
         var sb = new StringBuilder();
@@ -23,6 +25,7 @@ internal static class StringExtensions
         }
         return sb.ToString();
     }
+
     internal static string AsArrayString(this IList<string> response)
     {
         var sb = new StringBuilder();
