@@ -1,8 +1,7 @@
 using Redis.Database;
-using System.Net.Sockets;
-using System.Net;
-using System.Security.Cryptography;
 using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Sockets;
 
 namespace Redis.Server;
 

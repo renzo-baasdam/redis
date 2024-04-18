@@ -1,4 +1,3 @@
-using Redis;
 using Redis.Extensions;
 
 namespace Redis;

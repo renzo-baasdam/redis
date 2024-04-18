@@ -1,5 +1,4 @@
 using Redis.Extensions;
-using System;
 using System.Text;
 
 namespace Redis;
