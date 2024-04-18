@@ -6,6 +6,5 @@ namespace Redis.Server;
 public partial class RedisServer
 {
     protected readonly IPAddress LocalhostIP = Dns.GetHostEntry("localhost").AddressList
-        .Where(x => x.AddressFamily == AddressFamily.InterNetwork)
-        .First();
+        .First(x => x.AddressFamily == AddressFamily.InterNetwork);
 }

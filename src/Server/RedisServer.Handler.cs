@@ -84,7 +84,8 @@ public partial class RedisServer
 
     private IntegerMessage Wait(string[] args)
     {
-        if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) & int.TryParse(args[0], out int timeout))
+        // ReSharper disable once UnusedVariable
+        if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) & int.TryParse(args[0], out int _))
         {
             return new IntegerMessage(_replicas.Count);
         }
@@ -126,7 +127,7 @@ public partial class RedisServer
             OnRaiseReplConfEvent(new ReplConfEvent());
             return null;
         }
-        if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var port))
+        if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var _))
         {
             _replicas.Add(client);
             return new SimpleStringMessage("OK");
@@ -139,7 +140,7 @@ public partial class RedisServer
     private List<Message> PSync(string[] args)
     {
         var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
-        if (args.Length >= 1 && int.TryParse(args[1], out int offset))
+        if (args.Length >= 1 && int.TryParse(args[1], out int _))
         {
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
             var rdbResponse = new RdbFileMessage(bytes);

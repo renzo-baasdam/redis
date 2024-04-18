@@ -32,6 +32,7 @@ public partial class RedisServer : IDisposable
 
             ++clientNumber;
         }
+        // ReSharper disable once FunctionNeverReturns
     }
 
     private async void Listen(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")

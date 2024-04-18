@@ -2,7 +2,7 @@ using Redis.Extensions;
 
 namespace Redis;
 
-public abstract record Message()
+public abstract record Message
 {
     public int Count => ToBytes().Length;
     public virtual byte[] ToBytes() => ToString().AsUtf8();

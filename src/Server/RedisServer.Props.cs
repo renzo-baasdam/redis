@@ -18,8 +18,8 @@ public class WaitListener
 public partial class RedisServer
 {
     private readonly Dictionary<string, RedisValue> _cache = new();
-    protected readonly RedisConfig _config = new();
-    private readonly TcpListener _server = new(IPAddress.Any, 6379);
+    protected readonly RedisConfig _config;
+    private readonly TcpListener _server;
     private readonly List<TcpClient> _replicas = new();
 
     private event EventHandler<ReplConfEvent> RaiseReplConfEvent;
@@ -59,13 +59,8 @@ public partial class RedisServer
 
     private string? DatabasePath
     {
-        get
-        {
-            if (_config.Directory is { } dir && _config.Filename is { } filename)
-            {
-                return $"{dir}/{filename}";
-            }
-            return null;
-        }
+        get => _config is { Directory: { } dir, Filename: { } filename } 
+            ? $"{dir}/{filename}" 
+            : null;
     }
 }

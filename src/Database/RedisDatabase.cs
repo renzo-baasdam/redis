@@ -34,13 +34,13 @@ internal partial class RedisDatabase
                 {
                     // parse expiration
                     DateTime? expiration = null;
-                    if (bytes[index] == (byte)0xFD)
+                    if (bytes[index] == 0xFD)
                     {
                         var timeAsInt = BitConverter.ToInt32(bytes, ++index);
                         index += 4;
                         expiration = DateTimeOffset.FromUnixTimeSeconds(timeAsInt).UtcDateTime;
                     }
-                    if (bytes[index] == (byte)0xFC)
+                    if (bytes[index] == 0xFC)
                     {
                         var timeAsInt = BitConverter.ToInt64(bytes, ++index);
                         index += 8;
@@ -69,12 +69,12 @@ internal partial class RedisDatabase
     private static readonly HashSet<byte> ValueTypes = new() { 0, 1, 2, 3, 4, 9, 10, 11, 12, 13, 14 };
 
     private static bool HasNextKeyValue(byte value)
-        => ValueTypes.Contains(value) || (value == 0xFD) || (value == 0xFC);
+        => ValueTypes.Contains(value) || value == 0xFD || value == 0xFC;
 
     private static string DecodeValue(ref int index, byte[] bytes, byte valueType)
         => valueType switch
         {
-            (byte)0x0 => DecodeLengthPrefixedString(ref index, bytes),
+            0x0 => DecodeLengthPrefixedString(ref index, bytes),
             _ => throw new NotSupportedException($"Only Value type 0 is currently supported, found {valueType}. ")
         };
 
@@ -97,7 +97,7 @@ internal partial class RedisDatabase
             _ => throw new InvalidDataException("Reached a part of the code that should not be reachable.")
         };
 
-        static uint Length2(byte[] bytes, int i) => (((uint)(bytes[i] & 0b11_1111) << 8) | bytes[i + 1]);
+        static uint Length2(byte[] bytes, int i) => ((uint)(bytes[i] & 0b11_1111) << 8) | bytes[i + 1];
 
         static uint Length5(byte[] bytes, int i) => (uint)(0
                                                            | (bytes[i + 1] << 24)

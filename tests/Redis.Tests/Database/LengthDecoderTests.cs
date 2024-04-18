@@ -14,7 +14,7 @@ public class LengthDecoder
         const int index = 0;
         const uint header = 0b0000_0000;
         var first = (byte)(value & 0b11_1111 | header);
-        var encoded = new byte[] { first };
+        var encoded = new[] { first };
         RedisDatabase.DecodeLength(index, encoded).Should().Be((value, 1));
     }
 
