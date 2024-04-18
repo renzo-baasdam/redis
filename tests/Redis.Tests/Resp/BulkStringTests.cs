@@ -15,7 +15,7 @@ public class BulkStringTests
         var parser = new RespParser(stream);
         var bytes = new byte[1024];
         Encoding.UTF8.GetBytes(msg, bytes);
-        (var result, int offset) = parser.ParseBulkString(bytes, msg.Length - 1, 0);
+        (var result, int offset) = RespParser.ParseBulkString(bytes, msg.Length - 1, 0);
         result.Should().Be(new BulkStringMessage(expected));
         offset.Should().Be(msg.Length);
     }
@@ -27,7 +27,7 @@ public class BulkStringTests
         var parser = new RespParser(stream);
         var bytes = new byte[1024];
         Encoding.UTF8.GetBytes(msg, bytes);
-        var parse = () => parser.ParseBulkString(bytes, msg.Length - 1, 0);
+        var parse = () => RespParser.ParseBulkString(bytes, msg.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
             .WithMessage(@"Bulk string does not end with \r\n.");
     }
@@ -41,7 +41,7 @@ public class BulkStringTests
         var parser = new RespParser(stream);
         var bytes = new byte[1024];
         Encoding.UTF8.GetBytes(msg, bytes);
-        var parse = () => parser.ParseBulkString(bytes, msg.Length - 1, 0);
+        var parse = () => RespParser.ParseBulkString(bytes, msg.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
             .WithMessage("Bulk string didn't start with a number.");
     }

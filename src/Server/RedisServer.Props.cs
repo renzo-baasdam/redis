@@ -59,8 +59,8 @@ public partial class RedisServer
 
     private string? DatabasePath
     {
-        get => _config is { Directory: { } dir, Filename: { } filename } 
-            ? $"{dir}/{filename}" 
+        get => _config is { Directory: { } dir, Filename: { } filename }
+            ? $"{dir}/{filename}"
             : null;
     }
 }

@@ -4,7 +4,7 @@ namespace Redis.Server;
 
 public partial class RedisServer
 {
-    public void LoadDatabase()
+    protected void LoadDatabase()
     {
         try
         {

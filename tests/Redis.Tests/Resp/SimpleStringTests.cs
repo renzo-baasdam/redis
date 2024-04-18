@@ -15,7 +15,7 @@ public class SimpleStringTests
         var bytes = new byte[1024];
         var simple = $"+{msg}\r\n";
         Encoding.UTF8.GetBytes(simple, bytes);
-        (var result, int offset) = parser.ParseSimpleString(bytes, simple.Length - 1, 0);
+        (var result, int offset) = RespParser.ParseSimpleString(bytes, simple.Length - 1, 0);
         result.Should().Be(new SimpleStringMessage(msg));
         offset.Should().Be(simple.Length);
     }
@@ -32,7 +32,7 @@ public class SimpleStringTests
         var bytes = new byte[9]; // 9 so that the aabbccdd case fills the whole array
         var simple = $"+{msg}";
         Encoding.UTF8.GetBytes(simple, bytes);
-        var parse = () => parser.ParseSimpleString(bytes, simple.Length - 1, 0);
+        var parse = () => RespParser.ParseSimpleString(bytes, simple.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
             .WithMessage(@"Reached end of buffer before finding an \r\n.");
     }
@@ -42,7 +42,7 @@ public class SimpleStringTests
     {
         using var stream = new MemoryStream();
         var parser = new RespParser(stream);
-        var parse = () => parser.ParseSimpleString(Array.Empty<byte>(), -1, 0);
+        var parse = () => RespParser.ParseSimpleString(Array.Empty<byte>(), -1, 0);
         parse.Should().Throw<ArgumentOutOfRangeException>();
     }
 }

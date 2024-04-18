@@ -6,7 +6,7 @@ public abstract record Message
 {
     public int Count => ToBytes().Length;
     public virtual byte[] ToBytes() => ToString().AsUtf8();
-};
+}
 
 public sealed record SimpleStringMessage(string Value) : Message
 {
@@ -15,7 +15,7 @@ public sealed record SimpleStringMessage(string Value) : Message
 
 public sealed record NullBulkStringMessage() : BulkStringMessage(string.Empty)
 {
-    public override string ToString() => $"$-1\r\n";
+    public override string ToString() => "$-1\r\n";
 }
 
 public record BulkStringMessage(string Value) : Message

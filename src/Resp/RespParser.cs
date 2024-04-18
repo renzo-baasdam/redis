@@ -28,7 +28,7 @@ public class RespParser
         int offset = 0;
         while (offset < bufferLastIndex)
         {
-            (Message? msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
+            (var msg, offset) = ParseMessage(buffer, bufferLastIndex, offset);
             if (msg is not null) _bufferedMessages.Enqueue(msg);
         }
 
@@ -37,7 +37,7 @@ public class RespParser
             : null;
     }
 
-    public (Message, int) ParseSimpleString(byte[] buffer, int bufferLastIndex, int offset)
+    public static (Message, int) ParseSimpleString(byte[] buffer, int bufferLastIndex, int offset)
     {
         int end = offset + 1;
         while (end < bufferLastIndex)
@@ -50,7 +50,7 @@ public class RespParser
         return (new SimpleStringMessage(value), end + 2);
     }
 
-    public (Message, int) ParseBulkString(byte[] buffer, int bufferLastIndex, int offset)
+    public static (Message, int) ParseBulkString(byte[] buffer, int bufferLastIndex, int offset)
     {
         int length = 0;
         int end = offset + 1;
@@ -61,7 +61,7 @@ public class RespParser
         {
             if ((char)buffer[end] == '\r' && (char)buffer[end + 1] == '\n') break;
             int num = buffer[end] - '0';
-            if (num >= 0 && num <= 9) length = length * 10 + num;
+            if (num is >= 0 and <= 9) length = length * 10 + num;
             else throw new InvalidOperationException("Bulk string didn't start with a number.");
             ++end;
         }
@@ -87,7 +87,7 @@ public class RespParser
             ++end;
         }
         if (end == bufferLastIndex) throw new InvalidOperationException(@"Reached end of buffer before finding an \r\n.");
-        end = end + 2;
+        end += 2;
         var messages = new List<Message>();
         for (int i = 0; i < length; i++)
         {

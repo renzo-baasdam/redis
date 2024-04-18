@@ -31,7 +31,7 @@ public partial class RedisServer
         return new List<Message>();
     }
 
-    protected (string Command, string[] Args) ParseCommand(ArrayMessage message)
+    protected static (string Command, string[] Args) ParseCommand(ArrayMessage message)
     {
         if (message.Values.Any(x => x is not BulkStringMessage)) return ("UNKNOWN", Array.Empty<string>());
         var values = message.Values.Select(x => ((BulkStringMessage)x).Value).ToArray();
