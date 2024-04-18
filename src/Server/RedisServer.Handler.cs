@@ -9,7 +9,7 @@ public partial class RedisServer
     {
         if (message is ArrayMessage array)
         {
-            (var command, var args) = ParseCommand(array);
+            var (command, args) = ParseCommand(array);
             var response = command switch
             {
                 "GET" => new List<Message> { Get(args[0]) },
@@ -24,7 +24,7 @@ public partial class RedisServer
                 "REPLCONF" => ReplConf(args, client) is { } msg
                     ? new List<Message> { msg }
                     : new List<Message>(),
-                _ => new List<Message> { }
+                _ => new List<Message>()
             };
             return response;
         }

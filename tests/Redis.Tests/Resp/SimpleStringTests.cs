@@ -34,7 +34,7 @@ public class SimpleStringTests
         Encoding.UTF8.GetBytes(simple, bytes);
         var parse = () => parser.ParseSimpleString(bytes, simple.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
-            .WithMessage("Reached end of buffer before finding an \\r\\n.");
+            .WithMessage(@"Reached end of buffer before finding an \r\n.");
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class SimpleStringTests
         using var stream = new MemoryStream();
         var parser = new RespParser(stream);
         var bytes = new byte[1024];
-        var parse = () => parser.ParseSimpleString(new byte[0], -1, 0);
+        var parse = () => parser.ParseSimpleString(Array.Empty<byte>(), -1, 0);
         parse.Should().Throw<ArgumentOutOfRangeException>();
     }
 }
