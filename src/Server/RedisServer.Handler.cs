@@ -18,19 +18,19 @@ public partial class RedisServer
             (var command, var args) = ParseCommand(array);
             var response = command switch
             {
-                "GET" => new List<Message>() { Get(args[0]) },
-                "SET" => new List<Message>() { Set(args, message) },
-                "ECHO" => new List<Message>() { new BulkStringMessage(args[0]) },
-                "PING" => new List<Message>() { new SimpleStringMessage("PONG") },
-                "KEYS" => new List<Message>() { Keys() },
-                "INFO" => new List<Message>() { Info(args) },
-                "WAIT" => new List<Message>() { Wait(args) },
-                "CONFIG" => new List<Message>() { Config(args) },
+                "GET" => new List<Message> { Get(args[0]) },
+                "SET" => new List<Message> { Set(args, message) },
+                "ECHO" => new List<Message> { new BulkStringMessage(args[0]) },
+                "PING" => new List<Message> { new SimpleStringMessage("PONG") },
+                "KEYS" => new List<Message> { Keys() },
+                "INFO" => new List<Message> { Info(args) },
+                "WAIT" => new List<Message> { Wait(args) },
+                "CONFIG" => new List<Message> { Config(args) },
                 "PSYNC" => PSync(args),
                 "REPLCONF" => ReplConf(args, client) is { } msg
-                    ? new List<Message>() { msg }
+                    ? new List<Message> { msg }
                     : new List<Message>(),
-                _ => new List<Message>() { }
+                _ => new List<Message> { }
             };
             return response;
         }
@@ -49,7 +49,7 @@ public partial class RedisServer
         var key = args[0];
         var value = args[1];
         _cache[key] = args.Length >= 3 && args[2].ToUpper() == "PX"
-            ? new RedisValue()
+            ? new RedisValue
             {
                 Value = value,
                 Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[3]))
@@ -149,8 +149,8 @@ public partial class RedisServer
         {
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
             var rdbResponse = new RdbFileMessage(bytes);
-            return new List<Message>() { initialResponse, rdbResponse };
+            return new List<Message> { initialResponse, rdbResponse };
         }
-        return new List<Message>() { new NullBulkStringMessage() };
+        return new List<Message> { new NullBulkStringMessage() };
     }
 }

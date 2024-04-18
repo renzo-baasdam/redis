@@ -4,9 +4,9 @@ using Redis.Server;
 
 namespace Redis.Tests.Database;
 
-public class Rdb_parser
+public class RdbParser
 {
-    private byte[] _dump = new byte[]
+    private readonly byte[] _dump = new byte[]
     {
         0x52, 0x45, 0x44, 0x49, 0x53, 0x30, 0x30, 0x31, 0x31, 0xfa, 0x09, 0x72, 0x65,
         0x64, 0x69, 0x73, 0x2d, 0x76, 0x65, 0x72, 0x05, 0x37, 0x2e, 0x32, 0x2e, 0x34,
@@ -26,9 +26,9 @@ public class Rdb_parser
         dbInfo.Databases.Should().ContainSingle();
         dbInfo.Databases[0].Should().BeEquivalentTo(new RedisDatabase.Database(dbNumber: 0, dbHashTableSize: 1, expiryHashTableSize: 0)
         {
-            Values = new Dictionary<string, RedisValue>()
+            Values = new Dictionary<string, RedisValue>
             {
-                { "mykey", new() { Value = "myval" } }
+                { "mykey", new RedisValue { Value = "myval" } }
             }
         });
     }

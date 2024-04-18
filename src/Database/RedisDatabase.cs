@@ -1,4 +1,5 @@
 using System.Text;
+using Redis.Server;
 
 namespace Redis.Database;
 
@@ -50,7 +51,7 @@ internal partial class RedisDatabase
                     var valueType = bytes[index++];
                     var key = DecodeLengthPrefixedString(ref index, bytes);
                     var value = DecodeValue(ref index, bytes, valueType);
-                    db.Values[key] = new() { Value = value, Expiration = expiration };
+                    db.Values[key] = new RedisValue { Value = value, Expiration = expiration };
                 }
                 Databases.Add(db);
                 break;
@@ -65,12 +66,12 @@ internal partial class RedisDatabase
         return true;
     }
 
-    private static HashSet<byte> ValueTypes = new() { 0, 1, 2, 3, 4, 9, 10, 11, 12, 13, 14 };
+    private static readonly HashSet<byte> ValueTypes = new() { 0, 1, 2, 3, 4, 9, 10, 11, 12, 13, 14 };
 
-    private bool HasNextKeyValue(byte value)
+    private static bool HasNextKeyValue(byte value)
         => ValueTypes.Contains(value) || (value == 0xFD) || (value == 0xFC);
 
-    internal static string DecodeValue(ref int index, byte[] bytes, byte valueType)
+    private static string DecodeValue(ref int index, byte[] bytes, byte valueType)
         => valueType switch
         {
             (byte)0x0 => DecodeLengthPrefixedString(ref index, bytes),

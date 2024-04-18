@@ -54,7 +54,7 @@ public partial class RedisServer
     public RedisServer(RedisConfig config)
     {
         _config = config;
-        _server = new(IPAddress.Any, _config.Port);
+        _server = new TcpListener(IPAddress.Any, _config.Port);
         RaiseReplConfEvent += HandleRaiseReplConfEvent;
     }
 
