@@ -51,10 +51,11 @@ public partial class ReplicaServer : RedisServer
         {
             Console.WriteLine(ex.Message);
         }
+        return;
 
-        async Task Send(Stream stream, ArrayMessage msg)
+        async Task Send(Stream stream, Message msg)
         {
-            Console.WriteLine($"Master client. Sent request: {msg.ToString().Replace("\r\n", "\\r\\n")}");
+            Console.WriteLine($"Master client. Sent request: {msg.ToString().Replace("\r\n", @"\r\n")}");
             await stream.WriteAsync(msg.ToBytes());
         }
     }

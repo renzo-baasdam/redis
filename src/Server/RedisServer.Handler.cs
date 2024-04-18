@@ -48,7 +48,7 @@ public partial class RedisServer
                 Value = value,
                 Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[3]))
             }
-            : new RedisValue() { Value = value };
+            : new RedisValue { Value = value };
         Task.Run(() => Propagate(message));
         return new SimpleStringMessage("OK");
     }
@@ -108,7 +108,7 @@ public partial class RedisServer
             };
             if (value is not null)
             {
-                var pair = new List<Message>()
+                var pair = new List<Message>
                 {
                     new BulkStringMessage(key),
                     new BulkStringMessage(value)

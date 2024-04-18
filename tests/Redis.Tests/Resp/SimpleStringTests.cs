@@ -42,7 +42,6 @@ public class SimpleStringTests
     {
         using var stream = new MemoryStream();
         var parser = new RespParser(stream);
-        var bytes = new byte[1024];
         var parse = () => parser.ParseSimpleString(Array.Empty<byte>(), -1, 0);
         parse.Should().Throw<ArgumentOutOfRangeException>();
     }

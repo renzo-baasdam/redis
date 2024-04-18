@@ -26,7 +26,7 @@ public static class Program
             }
         }
 
-        RedisServer server = conf.Role == "master"
+        var server = conf.Role == "master"
             ? new RedisServer(conf)
             : new ReplicaServer(conf);
         try

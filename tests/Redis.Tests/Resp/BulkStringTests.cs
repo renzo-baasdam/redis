@@ -29,7 +29,7 @@ public class BulkStringTests
         Encoding.UTF8.GetBytes(msg, bytes);
         var parse = () => parser.ParseBulkString(bytes, msg.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
-            .WithMessage($"Bulk string does not end with \\r\\n.");
+            .WithMessage(@"Bulk string does not end with \r\n.");
     }
 
     [TestCase("$a2\r\na\r\n")]
@@ -43,6 +43,6 @@ public class BulkStringTests
         Encoding.UTF8.GetBytes(msg, bytes);
         var parse = () => parser.ParseBulkString(bytes, msg.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
-            .WithMessage($"Bulk string didn't start with a number.");
+            .WithMessage("Bulk string didn't start with a number.");
     }
 }

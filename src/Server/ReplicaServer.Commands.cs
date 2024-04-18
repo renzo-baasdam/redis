@@ -8,7 +8,7 @@ public partial class ReplicaServer
     {
         if (args.Length >= 1 && args[0].ToUpper() == "GETACK")
         {
-            var values = new List<Message>()
+            var values = new List<Message>
             {
                 new BulkStringMessage("REPLCONF"),
                 new BulkStringMessage("ACK"),

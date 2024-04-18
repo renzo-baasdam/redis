@@ -14,7 +14,7 @@ public partial class RedisServer
             _database = RedisDatabase.FromBytes(bytes);
             foreach (var kv in _database.Databases[0].Values)
                 _cache[kv.Key] = kv.Value;
-            Console.WriteLine($"Loaded database successfully.");
+            Console.WriteLine("Loaded database successfully.");
         }
         catch (Exception ex)
         {

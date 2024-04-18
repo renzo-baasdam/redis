@@ -6,18 +6,18 @@ namespace Redis.Tests.Resp;
 
 public class ArrayTests
 {
-    [TestCase("0")]
-    [TestCase("1")]
-    [TestCase("2")]
-    [TestCase("3")]
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
     public void RespParser_parses_BulkStrings(int count)
     {
-        var testData = new string[] { "one", "two", "onehundredandninetyeight" };
+        var testData = new[] { "one", "two", "onehundredandninetyeight" };
 
         using var stream = new MemoryStream();
         var parser = new RespParser(stream);
         var bytes = new byte[1024];
-        var array = testData[..(count)];
+        var array = testData[..count];
         var msg = $"*{count}\r\n" + string.Join(string.Empty, array.Select(str => str.AsBulkString()));
         Encoding.UTF8.GetBytes(msg, bytes);
 
@@ -39,7 +39,7 @@ public class ArrayTests
         Encoding.UTF8.GetBytes(msg, bytes);
         var parse = () => parser.ParseArray(bytes, msg.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
-            .WithMessage($"Reached end of buffer before finding an \\r\\n.");
+            .WithMessage(@"Reached end of buffer before finding an \r\n.");
     }
 
     [TestCase("*a2$1\r\na\r\n")]
@@ -52,6 +52,6 @@ public class ArrayTests
         Encoding.UTF8.GetBytes(msg, bytes);
         var parse = () => parser.ParseArray(bytes, msg.Length - 1, 0);
         parse.Should().Throw<InvalidOperationException>()
-            .WithMessage($"Array didn't start with a number.");
+            .WithMessage("Array didn't start with a number.");
     }
 }
