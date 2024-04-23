@@ -21,7 +21,8 @@ public class RespParser
         var bufferLastIndex = await _stream.ReadAsync(buffer);
         if (bufferLastIndex == 0)
         {
-            Console.WriteLine($"{context}: Closing stream!");
+            //todo make use to default logger
+            Console.WriteLine($"[{context}] Closing stream!");
             _stream.Close();
             return null;
         }
