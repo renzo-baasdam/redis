@@ -1,10 +1,11 @@
+using Redis.Client;
 using System.Net.Sockets;
 
 namespace Redis.Server;
 
 public partial class ReplicaServer
 {
-    protected override Message? ReplConf(string[] args, TcpClient client)
+    protected override Message? ReplConf(string[] args, RedisClient client)
     {
         if (args.Length >= 1 && args[0].ToUpper() == "GETACK")
         {

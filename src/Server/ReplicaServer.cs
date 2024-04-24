@@ -1,4 +1,5 @@
 using Redis.Client;
+using Redis.Extensions;
 using System.Net;
 using System.Net.Sockets;
 
@@ -7,7 +8,7 @@ namespace Redis.Server;
 public partial class ReplicaServer : RedisServer
 {
     private int Offset { get; set; }
-    private TcpClient? Master { get; set; }
+    private Guid? MasterId { get; set; }
 
     public ReplicaServer(RedisConfig config) : base(config)
     {
@@ -29,21 +30,21 @@ public partial class ReplicaServer : RedisServer
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
             await tcpClient.ConnectAsync(endpoint);
 
-            var client = new RedisClient($"client-@-mstr", tcpClient);
+            var client = new RedisClient("client-@-mstr", tcpClient);
 
-            Master = tcpClient;
+            MasterId = client.Id;
 
             // handshake
-            await Send(client.Stream, new ArrayMessage("PING"));
+            await Send(client, new ArrayMessage("PING"));
             await ListenOnce(client);
-            await Send(client.Stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
+            await Send(client, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
             await ListenOnce(client);
-            await Send(client.Stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
+            await Send(client, new ArrayMessage("REPLCONF", "capa", "psync2"));
             await ListenOnce(client);
-            await Send(client.Stream, new ArrayMessage("PSYNC", "?", "-1"));
+            await Send(client, new ArrayMessage("PSYNC", "?", "-1"));
             await ListenOnce(client);
             await ListenOnce(client);
-            Console.WriteLine("Replica has finished handling RDB file.");
+            client.Log($"Replica has finished handling RDB file.");
             Offset = 0;
             ReplicaListener(client);
         }
@@ -53,18 +54,18 @@ public partial class ReplicaServer : RedisServer
         }
         return;
 
-        async Task Send(Stream stream, Message msg)
+        async Task Send(RedisClient client, Message msg)
         {
-            Console.WriteLine($"Master client. Sent request: {msg.ToString().Replace("\r\n", @"\r\n")}");
-            await stream.WriteAsync(msg.ToBytes());
+            client.Log($"Sent request: {msg.ToString().Replace("\r\n", @"\r\n")}");
+            await client.Stream.WriteAsync(msg.ToBytes());
         }
     }
 
-    protected override IList<Message> Handler(Message message, TcpClient client)
+    protected override async Task<IList<Message>> Handler(Message message, RedisClient client)
     {
         // Replica should not send response to Master unless it is a REPLCONF response
-        var result = base.Handler(message, client);
-        return client != Master || IsReplconfCommand(message)
+        var result = await base.Handler(message, client);
+        return client.Id != MasterId || IsReplconfCommand(message)
             ? result
             : new List<Message>();
 
@@ -82,7 +83,7 @@ public partial class ReplicaServer : RedisServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Caught exception: {ex.Message}");
+                client.Log(ex.Message);
                 break;
             }
         }
@@ -90,7 +91,7 @@ public partial class ReplicaServer : RedisServer
 
     public override void Dispose()
     {
-        Master?.Dispose();
+        // todo other clients
         base.Dispose();
     }
 }

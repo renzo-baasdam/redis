@@ -1,3 +1,4 @@
+using Redis.Client;
 using Redis.Database;
 using System.Collections.Concurrent;
 using System.Net;
@@ -17,13 +18,13 @@ public class WaitListener
 
 public partial class RedisServer
 {
-    private readonly Dictionary<string, RedisValue> _cache = new();
     protected readonly RedisConfig _config;
+    private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly TcpListener _server;
-    private readonly List<TcpClient> _replicas = new();
+    private readonly ConcurrentDictionary<Guid, RedisClient> _replicas = new();
 
-    private event EventHandler<ReplConfEvent> RaiseReplConfEvent;
     private readonly ConcurrentDictionary<TcpClient, WaitListener> _waiters = new();
+    private event EventHandler<ReplConfEvent> RaiseReplConfEvent;
 
     protected virtual void OnRaiseReplConfEvent(ReplConfEvent e)
     {

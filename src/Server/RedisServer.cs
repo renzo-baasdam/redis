@@ -1,5 +1,5 @@
 using Redis.Client;
-using System.Net.Sockets;
+using Redis.Extensions;
 
 namespace Redis.Server;
 
@@ -26,11 +26,8 @@ public partial class RedisServer : IDisposable
         while (true)
         {
             var tcpClient = await _server.AcceptTcpClientAsync();
-            var stream = tcpClient.GetStream();
-            var parser = new RespParser(stream);
-            Console.WriteLine($"Established Tcp connection #{clientNumber}");
             var client = new RedisClient($"client-{clientNumber}-user", tcpClient);
-
+            client.Log("Connection established");
             Listen(client);
 
             ++clientNumber;
@@ -48,7 +45,7 @@ public partial class RedisServer : IDisposable
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Caught exception: {ex.Message}");
+                client.Log($"Caught exception: {ex.Message}");
                 break;
             }
         }
@@ -59,10 +56,10 @@ public partial class RedisServer : IDisposable
         var message = await client.Parser.ReadMessage(client.Name);
         if (message is not null)
         {
-            Console.WriteLine($"{client.Name}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
-            foreach (var output in Handler(message, client.TcpClient))
+            client.Log($"Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
+            foreach (var output in await Handler(message, client))
             {
-                Console.WriteLine($"{client.Name}. Sent Response: {output.ToString().ReplaceLineEndings("\\r\\n")}");
+                client.Log($"Sent Response: {output.ToString().ReplaceLineEndings("\\r\\n")}");
                 await client.Stream.WriteAsync(output.ToBytes());
             }
         }
@@ -71,9 +68,9 @@ public partial class RedisServer : IDisposable
 
     public virtual void Dispose()
     {
-        foreach (var replica in _replicas)
+        foreach (var replica in _replicas.Values)
         {
-            replica.Dispose();
+            replica.TcpClient.Dispose();
         }
     }
 }

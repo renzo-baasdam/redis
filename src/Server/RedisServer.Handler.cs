@@ -1,3 +1,4 @@
+using Redis.Client;
 using System.Net.Sockets;
 using System.Text;
 
@@ -5,7 +6,7 @@ namespace Redis.Server;
 
 public partial class RedisServer
 {
-    protected virtual IList<Message> Handler(Message message, TcpClient client)
+    protected virtual async Task<IList<Message>> Handler(Message message, RedisClient client)
     {
         if (message is ArrayMessage array)
         {
@@ -18,7 +19,7 @@ public partial class RedisServer
                 "PING" => new List<Message> { new SimpleStringMessage("PONG") },
                 "KEYS" => new List<Message> { Keys() },
                 "INFO" => new List<Message> { Info(args) },
-                "WAIT" => new List<Message> { Wait(args) },
+                "WAIT" => new List<Message> { await Wait(args) },
                 "CONFIG" => new List<Message> { Config(args) },
                 "PSYNC" => PSync(args),
                 "REPLCONF" => ReplConf(args, client) is { } msg
@@ -82,17 +83,20 @@ public partial class RedisServer
         return new NullBulkStringMessage();
     }
 
-    private IntegerMessage Wait(string[] args)
+    private async Task<IntegerMessage> Wait(string[] args)
     {
         // ReSharper disable once UnusedVariable
-        if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) & int.TryParse(args[0], out int _))
+        if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) && int.TryParse(args[1], out int timeout))
         {
             return new IntegerMessage(_replicas.Count);
         }
         // send replconf getack * to replica
         // replica sends replconf ack [offset] <- we know all previous set commands have been processed
-        // wait till event raised
-
+        // handle response (update offset on host server for this replica)
+        if (args.Length >= 1 && int.TryParse(args[0], out numreplicas) && int.TryParse(args[1], out timeout))
+        {
+            await Task.Delay(timeout);
+        }
         return new IntegerMessage(0);
     }
 
@@ -120,16 +124,16 @@ public partial class RedisServer
         return new ArrayMessage(new List<Message>());
     }
 
-    protected virtual Message? ReplConf(string[] args, TcpClient client)
+    protected virtual Message? ReplConf(string[] args, RedisClient client)
     {
         if (args.Length >= 1 && args[0].ToLower() == "ack")
         {
-            OnRaiseReplConfEvent(new ReplConfEvent());
+            //OnRaiseReplConfEvent(new ReplConfEvent());
             return null;
         }
         if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var _))
         {
-            _replicas.Add(client);
+            _replicas.TryAdd(client.Id, client);
             return new SimpleStringMessage("OK");
         }
         var second = args.Length >= 1 && args[0].ToLower() == "capa" && args[1].ToLower() == "psync2";
