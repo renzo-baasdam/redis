@@ -1,3 +1,4 @@
+using Redis.Client;
 using System.Net;
 using System.Net.Sockets;
 
@@ -24,28 +25,27 @@ public partial class ReplicaServer : RedisServer
     {
         try
         {
-            var client = new TcpClient();
+            var tcpClient = new TcpClient();
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
-            await client.ConnectAsync(endpoint);
+            await tcpClient.ConnectAsync(endpoint);
 
-            var stream = client.GetStream();
-            var parser = new RespParser(stream);
+            var client = new RedisClient($"client-@-mstr", tcpClient);
 
-            Master = client;
+            Master = tcpClient;
 
             // handshake
-            await Send(stream, new ArrayMessage("PING"));
-            await ListenOnce(parser, stream, client, "Master client");
-            await Send(stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
-            await ListenOnce(parser, stream, client, "Master client");
-            await Send(stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
-            await ListenOnce(parser, stream, client, "Master client");
-            await Send(stream, new ArrayMessage("PSYNC", "?", "-1"));
-            await ListenOnce(parser, stream, client, "Master client");
-            await ListenOnce(parser, stream, client, "Master client");
+            await Send(client.Stream, new ArrayMessage("PING"));
+            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await Send(client.Stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
+            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await Send(client.Stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
+            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await Send(client.Stream, new ArrayMessage("PSYNC", "?", "-1"));
+            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
             Console.WriteLine("Replica has finished handling RDB file.");
             Offset = 0;
-            ReplicaListener(parser, stream, client, "Master client");
+            ReplicaListener(client.Parser, client.Stream, client.TcpClient, "Master client");
         }
         catch (Exception ex)
         {
