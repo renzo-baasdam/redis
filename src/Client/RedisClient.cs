@@ -5,7 +5,7 @@ namespace Redis.Client;
 
 public class RedisClient
 {
-    public readonly Guid Id = new Guid();
+    public readonly Guid Id = Guid.NewGuid();
     public int Offset { get; set; }
 
     public string Name { get; set; }
