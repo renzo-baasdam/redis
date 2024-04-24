@@ -31,20 +31,20 @@ public partial class RedisServer : IDisposable
             Console.WriteLine($"Established Tcp connection #{clientNumber}");
             var client = new RedisClient($"client-{clientNumber}-user", tcpClient);
 
-            Listen(client.Parser, client.Stream, client.TcpClient, $"Client #{clientNumber}");
+            Listen(client);
 
             ++clientNumber;
         }
         // ReSharper disable once FunctionNeverReturns
     }
 
-    private async void Listen(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    private async void Listen(RedisClient client)
     {
-        while (stream.CanRead)
+        while (client.Stream.CanRead)
         {
             try
             {
-                await ListenOnce(parser, stream, client, context);
+                await ListenOnce(client);
             }
             catch (Exception ex)
             {
@@ -54,16 +54,16 @@ public partial class RedisServer : IDisposable
         }
     }
 
-    protected async Task<int> ListenOnce(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    protected async Task<int> ListenOnce(RedisClient client)
     {
-        var message = await parser.ReadMessage(context);
+        var message = await client.Parser.ReadMessage(client.Name);
         if (message is not null)
         {
-            Console.WriteLine($"{context}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
-            foreach (var output in Handler(message, client))
+            Console.WriteLine($"{client.Name}. Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
+            foreach (var output in Handler(message, client.TcpClient))
             {
-                Console.WriteLine($"{context}. Sent Response: {output.ToString().ReplaceLineEndings("\\r\\n")}");
-                await stream.WriteAsync(output.ToBytes());
+                Console.WriteLine($"{client.Name}. Sent Response: {output.ToString().ReplaceLineEndings("\\r\\n")}");
+                await client.Stream.WriteAsync(output.ToBytes());
             }
         }
         return message?.Count ?? 0;

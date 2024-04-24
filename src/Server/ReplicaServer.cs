@@ -35,17 +35,17 @@ public partial class ReplicaServer : RedisServer
 
             // handshake
             await Send(client.Stream, new ArrayMessage("PING"));
-            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await ListenOnce(client);
             await Send(client.Stream, new ArrayMessage("REPLCONF", "listening-port", _config.Port.ToString()));
-            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await ListenOnce(client);
             await Send(client.Stream, new ArrayMessage("REPLCONF", "capa", "psync2"));
-            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await ListenOnce(client);
             await Send(client.Stream, new ArrayMessage("PSYNC", "?", "-1"));
-            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
-            await ListenOnce(client.Parser, client.Stream, client.TcpClient, "Master client");
+            await ListenOnce(client);
+            await ListenOnce(client);
             Console.WriteLine("Replica has finished handling RDB file.");
             Offset = 0;
-            ReplicaListener(client.Parser, client.Stream, client.TcpClient, "Master client");
+            ReplicaListener(client);
         }
         catch (Exception ex)
         {
@@ -72,13 +72,13 @@ public partial class ReplicaServer : RedisServer
             => msg is ArrayMessage arrayMsg && ParseCommand(arrayMsg).Command == "REPLCONF";
     }
 
-    private async void ReplicaListener(RespParser parser, NetworkStream stream, TcpClient client, string context = "default")
+    private async void ReplicaListener(RedisClient client)
     {
-        while (stream.CanRead)
+        while (client.Stream.CanRead)
         {
             try
             {
-                Offset += await ListenOnce(parser, stream, client, context);
+                Offset += await ListenOnce(client);
             }
             catch (Exception ex)
             {
