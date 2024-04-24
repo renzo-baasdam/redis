@@ -1,3 +1,4 @@
+using Redis.Client;
 using System.Net.Sockets;
 
 namespace Redis.Server;
@@ -24,11 +25,13 @@ public partial class RedisServer : IDisposable
         int clientNumber = 0;
         while (true)
         {
-            var client = await _server.AcceptTcpClientAsync();
-            var stream = client.GetStream();
+            var tcpClient = await _server.AcceptTcpClientAsync();
+            var stream = tcpClient.GetStream();
             var parser = new RespParser(stream);
             Console.WriteLine($"Established Tcp connection #{clientNumber}");
-            Listen(parser, stream, client, $"Client #{clientNumber}");
+            var client = new RedisClient($"client-{clientNumber}-user", tcpClient);
+
+            Listen(client.Parser, client.Stream, client.TcpClient, $"Client #{clientNumber}");
 
             ++clientNumber;
         }
