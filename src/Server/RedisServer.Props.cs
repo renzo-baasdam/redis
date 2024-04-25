@@ -19,6 +19,7 @@ public class WaitListener
 public partial class RedisServer
 {
     protected readonly RedisConfig _config;
+    private RedisDatabase? Database { get; set; }
     private readonly Dictionary<string, RedisValue> _cache = new();
     private readonly TcpListener _server;
     private readonly ConcurrentDictionary<Guid, RedisClient> _replicas = new();
@@ -48,8 +49,6 @@ public partial class RedisServer
     {
         Console.WriteLine($"Handled event {e.Id}!");
     }
-
-    private RedisDatabase? _database { get; set; }
 
     public RedisServer(RedisConfig config)
     {

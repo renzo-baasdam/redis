@@ -1,5 +1,4 @@
 using Redis.Client;
-using System.Net.Sockets;
 
 namespace Redis.Server;
 

@@ -1,4 +1,3 @@
-using System.IO;
 using System.Net.Sockets;
 
 namespace Redis.Client;
@@ -8,10 +7,10 @@ public class RedisClient
     public readonly Guid Id = Guid.NewGuid();
     public int Offset { get; set; }
 
-    public string Name { get; set; }
-    public TcpClient TcpClient { get; init; }
-    public NetworkStream Stream { get; set; }
-    public RespParser Parser { get; set; }
+    public string Name { get; }
+    public TcpClient TcpClient { get; }
+    public NetworkStream Stream { get; }
+    public RespParser Parser { get; }
 
     public RedisClient(string name, TcpClient client, int offset) : this(name, client)
     {

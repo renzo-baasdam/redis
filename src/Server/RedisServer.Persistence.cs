@@ -11,8 +11,8 @@ public partial class RedisServer
             if (DatabasePath is null) return;
             Console.WriteLine($"Loading database from: {DatabasePath}");
             var bytes = File.ReadAllBytes(DatabasePath);
-            _database = RedisDatabase.FromBytes(bytes);
-            foreach (var kv in _database.Databases[0].Values)
+            Database = RedisDatabase.FromBytes(bytes);
+            foreach (var kv in Database.Databases[0].Values)
                 _cache[kv.Key] = kv.Value;
             Console.WriteLine("Loaded database successfully.");
         }

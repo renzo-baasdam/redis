@@ -56,10 +56,10 @@ public partial class RedisServer : IDisposable
         var message = await client.Parser.ReadMessage(client.Name);
         if (message is not null)
         {
-            client.Log($"Received command: {message.ToString().ReplaceLineEndings("\\r\\n")}.");
+            client.Log($"Received command: {message.ToString().ReplaceLineEndings(@"\r\n")}.");
             foreach (var output in await Handler(message, client))
             {
-                client.Log($"Sent Response: {output.ToString().ReplaceLineEndings("\\r\\n")}");
+                client.Log($"Sent Response: {output.ToString().ReplaceLineEndings(@"\r\n")}");
                 await client.Stream.WriteAsync(output.ToBytes());
             }
         }
