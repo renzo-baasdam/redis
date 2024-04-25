@@ -1,5 +1,4 @@
 using Redis.Client;
-using System.Net.Sockets;
 using System.Text;
 
 namespace Redis.Server;
@@ -10,11 +9,11 @@ public partial class RedisServer
     {
         if (message is ArrayMessage array)
         {
-            var (command, args) = ParseCommand(array);
+            (string command, string[] args) = ParseCommand(array);
             var response = command switch
             {
                 "GET" => new List<Message> { Get(args[0]) },
-                "SET" => new List<Message> { Set(args, message) },
+                "SET" => new List<Message> { await Set(args, message) },
                 "ECHO" => new List<Message> { new BulkStringMessage(args[0]) },
                 "PING" => new List<Message> { new SimpleStringMessage("PONG") },
                 "KEYS" => new List<Message> { Keys() },
@@ -39,7 +38,7 @@ public partial class RedisServer
         return (values[0].ToUpper(), values[1..]);
     }
 
-    private SimpleStringMessage Set(string[] args, Message message)
+    private async Task<SimpleStringMessage> Set(string[] args, Message message)
     {
         var key = args[0];
         var value = args[1];
@@ -50,7 +49,8 @@ public partial class RedisServer
                 Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[3]))
             }
             : new RedisValue { Value = value };
-        Task.Run(() => Propagate(message));
+        // todo don't wait for propagation, but still ensure order
+        await Propagate(message);
         return new SimpleStringMessage("OK");
     }
 
@@ -86,6 +86,7 @@ public partial class RedisServer
     private async Task<IntegerMessage> Wait(string[] args)
     {
         // ReSharper disable once UnusedVariable
+        // ReSharper disable once NotAccessedVariable
         if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) && int.TryParse(args[1], out int timeout))
         {
             return new IntegerMessage(_replicas.Count);
