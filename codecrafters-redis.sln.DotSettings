@@ -1,34 +1,19 @@
-﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="uhttp://schemas.microsoft.com/winfx/2006/xaml"
-                        xmlns:s="clr-namespace:System;assembly=mscorlib"
-                        xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml"
-                        xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String
-            x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=SuggestVarOrType_005FBuiltInTypes/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="uhttp://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=SuggestVarOrType_005FBuiltInTypes/@EntryIndexedValue">DO_NOT_SHOW</s:String>
     <s:String x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/ForBuiltInTypes/@EntryValue">UseExplicitType</s:String>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=capa/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=FULLRESYNC/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=getack/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=numreplicas/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=PSYNC/@EntryIndexedValue">True</s:Boolean>
-    <s:String
-            p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002EGlobal/@EntryIndexedValue"
-            xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">SUGGESTION</s:String>
-    <s:String
-            p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002ELocal/@EntryIndexedValue"
-            xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">SUGGESTION</s:String>
-    <s:String p5:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=IP/@EntryIndexedValue"
-              xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">IP</s:String>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=capa/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=FULLRESYNC/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=GETACK/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=numreplicas/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=onehundredandninetyeight/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=psync/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=REPLCONF/@EntryIndexedValue"
-               xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean></wpf:ResourceDictionary>
+    <s:String p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002EGlobal/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">SUGGESTION</s:String>
+    <s:String p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002ELocal/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">SUGGESTION</s:String>
+    <s:String p5:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=IP/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">IP</s:String>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=capa/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=FULLRESYNC/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=GETACK/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+	<s:Boolean p5:Key="/Default/UserDictionary/Words/=mstr/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=numreplicas/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=onehundredandninetyeight/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=psync/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=REPLCONF/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean></wpf:ResourceDictionary>

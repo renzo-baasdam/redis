@@ -134,6 +134,7 @@ public partial class RedisServer
         }
         if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var _))
         {
+            client.ClientType = "repl";
             _replicas.TryAdd(client.Id, client);
             return new SimpleStringMessage("OK");
         }

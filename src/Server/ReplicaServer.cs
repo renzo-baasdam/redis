@@ -30,8 +30,10 @@ public partial class ReplicaServer : RedisServer
             var endpoint = new IPEndPoint(LocalhostIP, masterPort);
             await tcpClient.ConnectAsync(endpoint);
 
-            var client = new RedisClient("client-@-mstr", tcpClient);
-
+            var client = new RedisClient("@", tcpClient)
+            {
+                ClientType = "mstr",
+            };
             MasterId = client.Id;
 
             // handshake

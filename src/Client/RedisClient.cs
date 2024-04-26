@@ -6,8 +6,9 @@ public class RedisClient
 {
     public readonly Guid Id = Guid.NewGuid();
     public int Offset { get; set; }
-
-    public string Name { get; }
+    public string ClientType { get; set; } = "user";
+    private string NameId { get; }
+    public string Name => $"client-{NameId}-{ClientType}";
     public TcpClient TcpClient { get; }
     public NetworkStream Stream { get; }
     public RespParser Parser { get; }
@@ -17,9 +18,9 @@ public class RedisClient
         Offset = offset;
     }
 
-    public RedisClient(string name, TcpClient client)
+    public RedisClient(string nameId, TcpClient client)
     {
-        Name = name;
+        NameId = nameId;
         TcpClient = client;
         Stream = TcpClient.GetStream();
         Parser = new RespParser(Stream);

@@ -26,7 +26,7 @@ public partial class RedisServer : IDisposable
         while (true)
         {
             var tcpClient = await _server.AcceptTcpClientAsync();
-            var client = new RedisClient($"client-{clientNumber}-user", tcpClient);
+            var client = new RedisClient(clientNumber.ToString(), tcpClient);
             client.Log("Connection established");
             Listen(client);
 
