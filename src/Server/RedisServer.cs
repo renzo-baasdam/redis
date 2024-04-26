@@ -59,8 +59,7 @@ public partial class RedisServer : IDisposable
             client.Log($"Received command: {message.ToString().ReplaceLineEndings(@"\r\n")}.");
             foreach (var output in await Handler(message, client))
             {
-                client.Log($"Sent Response: {output.ToString().ReplaceLineEndings(@"\r\n")}");
-                await client.Stream.WriteAsync(output.ToBytes());
+                await client.Send(message);
             }
         }
         return message?.Count ?? 0;
