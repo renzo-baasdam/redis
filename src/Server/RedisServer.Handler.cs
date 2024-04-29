@@ -93,7 +93,8 @@ public partial class RedisServer
         int replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
         if (replicasReady >= replicasNeeded) return new IntegerMessage(replicasReady);
 
-        foreach (var replica in _replicas.Values) await replica.Send(new ArrayMessage("REPLCONF", "GETACK", "*"));
+        foreach (var replica in _replicas.Values.Where(x => x.AckOffset < x.ExpectedOffset)) 
+            await replica.Send(new ArrayMessage("REPLCONF", "GETACK", "*"));
         var timer = new Stopwatch();
         timer.Start();
         while (timer.ElapsedMilliseconds < timeout)
