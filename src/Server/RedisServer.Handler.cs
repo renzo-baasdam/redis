@@ -20,7 +20,7 @@ public partial class RedisServer
                 "INFO" => new List<Message> { Info(args) },
                 "WAIT" => new List<Message> { await Wait(args) },
                 "CONFIG" => new List<Message> { Config(args) },
-                "PSYNC" => PSync(args),
+                "PSYNC" => PSync(args, client),
                 "REPLCONF" => ReplConf(args, client) is { } msg
                     ? new List<Message> { msg }
                     : new List<Message>(),
@@ -134,8 +134,6 @@ public partial class RedisServer
         }
         if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var _))
         {
-            client.ClientType = "repl";
-            _replicas.TryAdd(client.Id, client);
             return new SimpleStringMessage("OK");
         }
         var second = args.Length >= 1 && args[0].ToLower() == "capa" && args[1].ToLower() == "psync2";
@@ -143,13 +141,15 @@ public partial class RedisServer
         return new SimpleStringMessage("OK");
     }
 
-    private List<Message> PSync(string[] args)
+    private List<Message> PSync(string[] args, RedisClient client)
     {
-        var bytes = Convert.FromBase64String(RedisConfig.EmptyRdb);
-        if (args.Length >= 1 && int.TryParse(args[1], out int _))
+        if (args.Length >= 1 && int.TryParse(args[1], out int offset))
         {
+            _replicas.TryAdd(client.Id, client);
+            client.ClientType = "repl";
+            client.Offset = offset >= 0 ? offset : 0;
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
-            var rdbResponse = new RdbFileMessage(bytes);
+            var rdbResponse = new RdbFileMessage(Convert.FromBase64String(RedisConfig.EmptyRdb));
             return new List<Message> { initialResponse, rdbResponse };
         }
         return new List<Message> { new NullBulkStringMessage() };

@@ -44,7 +44,8 @@ public class RedisClient
         this.Log($"Sent Response: {message.ToString().ReplaceLineEndings(@"\r\n")}");
         var bytes = message.ToBytes();
         await Stream.WriteAsync(bytes);
-        Offset += bytes.Length;
+        if(ClientType == "repl") Offset += bytes.Length;
         Sent.Push(message);
+        this.Log($"Offset: {ExpectedOffset}");
     }
 }

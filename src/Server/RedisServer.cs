@@ -57,9 +57,9 @@ public partial class RedisServer : IDisposable
         if (message is not null)
         {
             client.Log($"Received command: {message.ToString().ReplaceLineEndings(@"\r\n")}.");
-            foreach (var output in await Handler(message, client))
+            foreach (var response in await Handler(message, client))
             {
-                await client.Send(message);
+                await client.Send(response);
             }
         }
         return message?.Count ?? 0;
