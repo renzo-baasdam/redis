@@ -100,7 +100,7 @@ public partial class RedisServer
         {
             replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
             if (replicasNeeded <= replicasReady) return new IntegerMessage(replicasReady);
-            await Task.Delay(5);
+            await Task.Delay(10);
         }
         replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
         return new IntegerMessage(replicasReady);
