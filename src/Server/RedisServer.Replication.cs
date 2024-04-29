@@ -1,5 +1,3 @@
-using Redis.Extensions;
-
 namespace Redis.Server;
 
 public partial class RedisServer

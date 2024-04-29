@@ -1,5 +1,4 @@
 using Redis.Extensions;
-using System.Collections;
 using System.Net.Sockets;
 
 namespace Redis.Client;
@@ -42,11 +41,11 @@ public class RedisClient
 
     public async Task Send(Message message)
     {
-        Log($"Sent Response: {message.ToString().ReplaceLineEndings(@"\r\n")}");
         var bytes = message.ToBytes();
         await Stream.WriteAsync(bytes);
         if (ClientType == "repl") SentOffset += bytes.Length;
         Sent.Push(message);
+        Log($"Sent: {message.ToString().ReplaceLineEndings(@"\r\n")}");
     }
 
     public void Log(string message)

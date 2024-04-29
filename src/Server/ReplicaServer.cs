@@ -1,5 +1,4 @@
 using Redis.Client;
-using Redis.Extensions;
 using System.Net;
 using System.Net.Sockets;
 

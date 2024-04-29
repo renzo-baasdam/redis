@@ -1,5 +1,4 @@
 using Redis.Client;
-using Redis.Extensions;
 
 namespace Redis.Server;
 
@@ -56,7 +55,7 @@ public partial class RedisServer : IDisposable
         var message = await client.Parser.ReadMessage(client.Name);
         if (message is not null)
         {
-            client.Log($"Received command: {message.ToString().ReplaceLineEndings(@"\r\n")}.");
+            client.Log($"Received: {message.ToString().ReplaceLineEndings(@"\r\n")}.");
             foreach (var response in await Handler(message, client))
             {
                 await client.Send(response);

@@ -1,5 +1,3 @@
-using Redis.Client;
-
 namespace Redis.Extensions;
 
 internal static class MessageExtensions
