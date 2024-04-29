@@ -47,7 +47,6 @@ public partial class ReplicaServer : RedisServer
             await ListenOnce(client);
             client.Log("Replica has finished handling RDB file.");
             Offset = 0;
-            await Send(client, new ArrayMessage("REPLCONF", "ACK", Offset.ToString()));
             ReplicaListener(client);
         }
         catch (Exception ex)
