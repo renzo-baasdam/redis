@@ -43,10 +43,10 @@ public partial class ReplicaServer : RedisServer
             await Send(client, new ArrayMessage("REPLCONF", "capa", "psync2"));
             await ListenOnce(client);
             await Send(client, new ArrayMessage("PSYNC", "?", "-1"));
-            Offset = 0;
-            Offset += await ListenOnce(client);
-            Offset += await ListenOnce(client);
+            await ListenOnce(client);
+            await ListenOnce(client);
             client.Log("Replica has finished handling RDB file.");
+            Offset = 0;
             await Send(client, new ArrayMessage("REPLCONF", "ACK", Offset.ToString()));
             ReplicaListener(client);
         }

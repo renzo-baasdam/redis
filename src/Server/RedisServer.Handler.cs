@@ -150,11 +150,11 @@ public partial class RedisServer
     {
         if (args.Length >= 1 && int.TryParse(args[1], out int offset))
         {
-            _replicas.TryAdd(client.Id, client);
-            client.ClientType = "repl";
-            client.SentOffset = offset >= 0 ? offset : 0;
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
             var rdbResponse = new RdbFileMessage(Convert.FromBase64String(RedisConfig.EmptyRdb));
+            _replicas.TryAdd(client.Id, client);
+            client.ClientType = "repl";
+            client.SentOffset = (offset >= 0 ? offset : 0) - (initialResponse.Count + rdbResponse.Count);
             return new List<Message> { initialResponse, rdbResponse };
         }
         return new List<Message> { new NullBulkStringMessage() };
