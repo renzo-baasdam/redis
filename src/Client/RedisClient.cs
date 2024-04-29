@@ -16,7 +16,7 @@ public class RedisClient
     public readonly Stack<Message> Sent = new();
 
     /// <summary>
-    /// Expected offset does not count the latest replconf command bytes sent, if it was the latest command.
+    /// Expected offset does not count the latest replconf getack command bytes sent, if it was the latest command.
     /// </summary>
     public int ExpectedOffset => Sent.Peek() is { } msg && msg.IsReplConf()
         ? SentOffset - msg.Count
@@ -45,10 +45,8 @@ public class RedisClient
         Log($"Sent Response: {message.ToString().ReplaceLineEndings(@"\r\n")}");
         var bytes = message.ToBytes();
         await Stream.WriteAsync(bytes);
-        if(ClientType == "repl") SentOffset += bytes.Length;
+        if (ClientType == "repl") SentOffset += bytes.Length;
         Sent.Push(message);
-        Log($"bytes.Length: {bytes.Length}");
-        Log($"ExpectedOffset: {ExpectedOffset}");
     }
 
     public void Log(string message)

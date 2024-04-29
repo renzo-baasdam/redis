@@ -60,7 +60,6 @@ public partial class ReplicaServer : RedisServer
         async Task Send(RedisClient client, Message msg)
         {
             client.Log($"Sent request: {msg.ToString().Replace("\r\n", @"\r\n")}");
-            client.Log($"Offset: {Offset}");
             await client.Stream.WriteAsync(msg.ToBytes());
         }
     }

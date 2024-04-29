@@ -1,4 +1,5 @@
 using Redis.Client;
+using System.Diagnostics;
 using System.Text;
 
 namespace Redis.Server;
@@ -85,21 +86,24 @@ public partial class RedisServer
 
     private async Task<IntegerMessage> Wait(string[] args)
     {
+        if (args.Length < 2
+            || !int.TryParse(args[0], out int replicasNeeded)
+            || !int.TryParse(args[1], out int timeout)) return new IntegerMessage(0);
+
         int replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
-        // ReSharper disable once UnusedVariable
-        // ReSharper disable once NotAccessedVariable
-        if (args.Length >= 1 && int.TryParse(args[0], out int replicasNeeded) && int.TryParse(args[1], out int timeout) && replicasNeeded <= replicasReady)
+        if (replicasReady >= replicasNeeded) return new IntegerMessage(replicasReady);
+
+        foreach (var replica in _replicas.Values) await replica.Send(new ArrayMessage("REPLCONF", "GETACK", "*"));
+        var timer = new Stopwatch();
+        timer.Start();
+        while (timer.ElapsedMilliseconds < timeout)
         {
-            return new IntegerMessage(_replicas.Count);
+            replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
+            if (replicasNeeded <= replicasReady) return new IntegerMessage(_replicas.Count);
+            await Task.Delay(5);
         }
-        // send replconf getack * to replica
-        // replica sends replconf ack [offset] <- we know all previous set commands have been processed
-        // handle response (update offset on host server for this replica)
-        if (args.Length >= 1 && int.TryParse(args[0], out replicasNeeded) && int.TryParse(args[1], out timeout))
-        {
-            await Task.Delay(timeout);
-        }
-        return new IntegerMessage(0);
+        replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
+        return new IntegerMessage(replicasReady);
     }
 
     private ArrayMessage Config(string[] args)
