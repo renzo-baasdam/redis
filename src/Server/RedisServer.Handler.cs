@@ -99,7 +99,7 @@ public partial class RedisServer
         while (timer.ElapsedMilliseconds < timeout)
         {
             replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
-            if (replicasNeeded <= replicasReady) return new IntegerMessage(_replicas.Count);
+            if (replicasNeeded <= replicasReady) return new IntegerMessage(replicasReady);
             await Task.Delay(5);
         }
         replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
