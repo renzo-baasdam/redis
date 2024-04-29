@@ -21,7 +21,7 @@ public partial class RedisServer
                 "INFO" => new List<Message> { Info(args) },
                 "WAIT" => new List<Message> { await Wait(args) },
                 "CONFIG" => new List<Message> { Config(args) },
-                "PSYNC" => PSync(args, client),
+                "PSYNC" => await PSync(args, client),
                 "REPLCONF" => ReplConf(args, client) is { } msg
                     ? new List<Message> { msg }
                     : new List<Message>(),
@@ -146,16 +146,19 @@ public partial class RedisServer
         return new SimpleStringMessage("OK");
     }
 
-    private List<Message> PSync(string[] args, RedisClient client)
+    private async Task<List<Message>> PSync(string[] args, RedisClient client)
     {
         if (args.Length >= 1 && int.TryParse(args[1], out int offset))
         {
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
             var rdbResponse = new RdbFileMessage(Convert.FromBase64String(RedisConfig.EmptyRdb));
+            await client.Send(initialResponse);
+            await client.Send(rdbResponse);
+
             _replicas.TryAdd(client.Id, client);
             client.ClientType = "repl";
-            client.SentOffset = (offset >= 0 ? offset : 0) - (initialResponse.Count + rdbResponse.Count);
-            return new List<Message> { initialResponse, rdbResponse };
+            client.SentOffset = (offset >= 0 ? offset : 0);
+            return new List<Message>();
         }
         return new List<Message> { new NullBulkStringMessage() };
     }
