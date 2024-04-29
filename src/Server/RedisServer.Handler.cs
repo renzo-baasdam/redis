@@ -85,16 +85,17 @@ public partial class RedisServer
 
     private async Task<IntegerMessage> Wait(string[] args)
     {
+        int replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
         // ReSharper disable once UnusedVariable
         // ReSharper disable once NotAccessedVariable
-        if (args.Length >= 1 && int.TryParse(args[0], out int numreplicas) && int.TryParse(args[1], out int timeout))
+        if (args.Length >= 1 && int.TryParse(args[0], out int replicasNeeded) && int.TryParse(args[1], out int timeout) && replicasNeeded <= replicasReady)
         {
             return new IntegerMessage(_replicas.Count);
         }
         // send replconf getack * to replica
         // replica sends replconf ack [offset] <- we know all previous set commands have been processed
         // handle response (update offset on host server for this replica)
-        if (args.Length >= 1 && int.TryParse(args[0], out numreplicas) && int.TryParse(args[1], out timeout))
+        if (args.Length >= 1 && int.TryParse(args[0], out replicasNeeded) && int.TryParse(args[1], out timeout))
         {
             await Task.Delay(timeout);
         }
@@ -127,9 +128,9 @@ public partial class RedisServer
 
     protected virtual Message? ReplConf(string[] args, RedisClient client)
     {
-        if (args.Length >= 1 && args[0].ToLower() == "ack")
+        if (args.Length >= 1 && args[0].ToLower() == "ack" && int.TryParse(args[1], out int offset))
         {
-            //OnRaiseReplConfEvent(new ReplConfEvent());
+            client.AckOffset = offset;
             return null;
         }
         if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var _))
@@ -147,7 +148,7 @@ public partial class RedisServer
         {
             _replicas.TryAdd(client.Id, client);
             client.ClientType = "repl";
-            client.Offset = offset >= 0 ? offset : 0;
+            client.SentOffset = offset >= 0 ? offset : 0;
             var initialResponse = new SimpleStringMessage($"FULLRESYNC {_config.MasterReplicationId} {_config.MasterReplicationOffset}");
             var rdbResponse = new RdbFileMessage(Convert.FromBase64String(RedisConfig.EmptyRdb));
             return new List<Message> { initialResponse, rdbResponse };

@@ -19,16 +19,17 @@ public class RedisClient
     /// Expected offset does not count the latest replconf command bytes sent, if it was the latest command.
     /// </summary>
     public int ExpectedOffset => Sent.Peek() is { } msg && msg.IsReplConf()
-        ? Offset - msg.Count
-        : Offset;
-    public int Offset { get; set; }
+        ? SentOffset - msg.Count
+        : SentOffset;
+    public int AckOffset { get; set; }
+    public int SentOffset { get; set; }
     public TcpClient TcpClient { get; }
     public NetworkStream Stream { get; }
     public RespParser Parser { get; }
 
     public RedisClient(string name, TcpClient client, int offset) : this(name, client)
     {
-        Offset = offset;
+        SentOffset = offset;
     }
 
     public RedisClient(string nameId, TcpClient client)
@@ -41,11 +42,15 @@ public class RedisClient
 
     public async Task Send(Message message)
     {
-        this.Log($"Sent Response: {message.ToString().ReplaceLineEndings(@"\r\n")}");
+        Log($"Sent Response: {message.ToString().ReplaceLineEndings(@"\r\n")}");
         var bytes = message.ToBytes();
         await Stream.WriteAsync(bytes);
-        if(ClientType == "repl") Offset += bytes.Length;
+        if(ClientType == "repl") SentOffset += bytes.Length;
         Sent.Push(message);
-        this.Log($"Offset: {ExpectedOffset}");
+        Log($"bytes.Length: {bytes.Length}");
+        Log($"ExpectedOffset: {ExpectedOffset}");
     }
+
+    public void Log(string message)
+        => Console.WriteLine($"[{Name}] {message}");
 }

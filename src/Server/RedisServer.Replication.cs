@@ -12,7 +12,7 @@ public partial class RedisServer
             try
             {
                 client.Log($"Propagating cmd to replica: {msg.ToString().ReplaceLineEndings(@"\r\n")}");
-                await client.Stream.WriteAsync(msg.ToBytes());
+                await client.Send(msg);
             }
             catch (Exception ex)
             {
