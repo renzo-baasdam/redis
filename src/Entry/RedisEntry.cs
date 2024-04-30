@@ -16,8 +16,9 @@ internal record StringEntry : RedisEntry
 
 internal record StreamEntry : RedisEntry
 {
-    public List<StreamItem> Items { get; init; } = new();
-
+    public List<StreamItem> Items { get; } = new();
+    public StreamId? LastId => Items.LastOrDefault()?.Id;
+    
     public static bool TryCreate(
         string id, 
         Dictionary<string, string> value, 
@@ -89,7 +90,7 @@ internal record StreamEntry : RedisEntry
 
 public record StreamItem
 {
-    public StreamId Id { get; init; }
+    public StreamId Id { get; }
     public Dictionary<string, string> Value { get; init; } = new();
     public StreamItem(StreamId id, Dictionary<string, string> value)
     {
@@ -109,6 +110,8 @@ public readonly struct StreamId
         SequenceNumber = seq;
     }
 
+    public override string ToString() => $"{MillisecondsTime}-{SequenceNumber}";
+    
     public static bool operator ==(StreamId s1, StreamId s2)
         => s1.MillisecondsTime == s2.MillisecondsTime && s1.SequenceNumber == s2.SequenceNumber;
     public static bool operator !=(StreamId s1, StreamId s2)

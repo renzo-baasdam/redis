@@ -79,7 +79,8 @@ public partial class RedisServer
             if (!stream.TryAdd(id, value, out var msg))
                 return msg;
         }
-        return new BulkStringMessage(id);
+        var newId = ((StreamEntry)_cache[key]).LastId!.Value.ToString();
+        return new BulkStringMessage(newId);
     }
 
     private BulkStringMessage Get(string key)
