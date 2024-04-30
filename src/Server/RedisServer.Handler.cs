@@ -67,13 +67,18 @@ public partial class RedisServer
         for (int i = 2; i < args.Length; i += 2)
             value.Add(args[i], args[i + 1]);
 
-        if (!StreamId.TryParse(id, out var newId, out var msg)) return msg;
         if (!_cache.TryGetValue(key, out var current) || current.IsExpired)
-            _cache.Add(key, new StreamEntry(new StreamItem() { Id = newId.Value, Value = value }));
+        {
+            if (!StreamEntry.TryCreate(id, value, out var entry, out var msg)) return msg;
+            _cache.Add(key, entry);
+        }
         else if (current is not StreamEntry stream)
             return new ErrorMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
-        else if (!stream.TryAdd(new StreamItem() { Id = newId.Value, Value = value }, out msg))
-            return msg;
+        else
+        {
+            if (!stream.TryAdd(id, value, out var msg))
+                return msg;
+        }
         return new BulkStringMessage(id);
     }
 

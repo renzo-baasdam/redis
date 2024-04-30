@@ -18,20 +18,70 @@ internal record StreamEntry : RedisEntry
 {
     public List<StreamItem> Items { get; init; } = new();
 
-    public StreamEntry(StreamItem initial)
+    public static bool TryCreate(
+        string id, 
+        Dictionary<string, string> value, 
+        [NotNullWhen(true)] out StreamEntry? entry,
+        [NotNullWhen(false)] out ErrorMessage? msg)
     {
-        Items.Add(initial);
+        entry = new StreamEntry();
+        if(!entry.TryAdd(id, value, out msg))
+            return false;
+        return true;
     }
 
-    public bool TryAdd(StreamItem item, [NotNullWhen(false)] out ErrorMessage? msg)
+    public bool TryAdd(string id, Dictionary<string, string> value, [NotNullWhen(false)] out ErrorMessage? msg)
     {
-        msg = null;
-        if (item.Id <= Items.Last().Id)
+        if (!TryParseId(id, out var streamId, out msg))
+        {
+            return false;
+        }
+        if (Items.Count > 0 && streamId <= Items.Last().Id)
         {
             msg = new("ERR The ID specified in XADD is equal or smaller than the target stream top item");
             return false;
         }
-        Items.Add(item);
+        Items.Add(new StreamItem(streamId.Value, value));
+        return true;
+    }
+
+    public bool TryParseId(
+        string id,
+        [NotNullWhen(true)] out StreamId? streamId,
+        [NotNullWhen(false)] out ErrorMessage? msg)
+    {
+        streamId = null;
+        msg = null;
+        if (id == "*")
+        {
+            streamId = new(DateTime.UtcNow.Ticks, 0);
+            return true;
+        }
+
+        var split = id.Split("-");
+        if (split.Length != 2 || !long.TryParse(split[0], out long ms))
+        {
+            msg = new("ERR Invalid stream ID specified as stream command argument");
+            return false;
+        }
+        if (split[1] == "*")
+        {
+            var oldId = Items.Last().Id;
+            if (oldId.MillisecondsTime == ms) streamId = new(ms, oldId.SequenceNumber + 1);
+            else streamId = new(ms, 0);
+            return true;
+        }
+        if (split.Length != 2 || !long.TryParse(split[0], out ms) || !long.TryParse(split[1], out long seq))
+        {
+            msg = new("ERR Invalid stream ID specified as stream command argument");
+            return false;
+        }
+        if (new StreamId(ms, seq) <= new StreamId(0, 0))
+        {
+            msg = new("ERR The ID specified in XADD must be greater than 0-0");
+            return false;
+        }
+        streamId = new(ms, seq);
         return true;
     }
 }
@@ -40,36 +90,26 @@ public record StreamItem
 {
     public StreamId Id { get; init; }
     public Dictionary<string, string> Value { get; init; } = new();
+    public StreamItem(StreamId id, Dictionary<string, string> value)
+    {
+        Id = id;
+        Value = value;
+    }
+}
+
+public enum StreamIdType
+{
+    Determined,
+    PartialAuto,
+    Auto,
 }
 
 public struct StreamId
 {
-    public ulong MillisecondsTime { get; init; }
-    public ulong SequenceNumber { get; init; }
+    public long MillisecondsTime { get; init; }
+    public long SequenceNumber { get; init; }
 
-    public static bool TryParse(
-        string id,
-        [NotNullWhen(true)] out StreamId? streamId,
-        [NotNullWhen(false)] out ErrorMessage? msg)
-    {
-        streamId = null;
-        msg = null;
-        var split = id.Split("-");
-        if (split.Length != 2 || !ulong.TryParse(split[0], out ulong ms) || !ulong.TryParse(split[1], out ulong seq))
-        {
-            msg = new("ERR Invalid stream ID specified as stream command argument");
-            return false;
-        }
-        if (ms == 0 && seq == 0)
-        {
-            msg = new("ERR The ID specified in XADD must be greater than 0-0");
-            return false;
-        }
-        streamId = new(ms, seq);
-        return true;
-    }
-
-    public StreamId(ulong ms, ulong seq)
+    public StreamId(long ms, long seq)
     {
         MillisecondsTime = ms;
         SequenceNumber = seq;
@@ -88,7 +128,7 @@ public struct StreamId
     public static bool operator <=(StreamId s1, StreamId s2)
         => (s1 < s2) || (s1 == s2);
 
-    public override bool Equals(object? obj) 
+    public override bool Equals(object? obj)
         => obj is StreamId id && this == id;
     public override int GetHashCode()
         => MillisecondsTime.GetHashCode() ^ (SequenceNumber.GetHashCode() << 16);
