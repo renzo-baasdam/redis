@@ -55,7 +55,7 @@ public struct StreamId
         streamId = null;
         msg = null;
         var split = id.Split("-");
-        if (split.Length != 2 || !ulong.TryParse(split[0], out ulong ms) || !ulong.TryParse(split[0], out ulong seq))
+        if (split.Length != 2 || !ulong.TryParse(split[0], out ulong ms) || !ulong.TryParse(split[1], out ulong seq))
         {
             msg = new("ERR Invalid stream ID specified as stream command argument");
             return false;
