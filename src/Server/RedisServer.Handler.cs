@@ -15,6 +15,7 @@ public partial class RedisServer
             {
                 "GET" => new List<Message> { Get(args[0]) },
                 "SET" => new List<Message> { await Set(args, message) },
+                "TYPE" => new List<Message> { Type(args[0]) },
                 "ECHO" => new List<Message> { new BulkStringMessage(args[0]) },
                 "PING" => new List<Message> { new SimpleStringMessage("PONG") },
                 "KEYS" => new List<Message> { Keys() },
@@ -60,6 +61,13 @@ public partial class RedisServer
         if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
             return new BulkStringMessage(value.Value);
         return new NullBulkStringMessage();
+    }
+
+    private SimpleStringMessage Type(string key)
+    {
+        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
+            return new SimpleStringMessage("string");
+        return new SimpleStringMessage("none");
     }
 
     private ArrayMessage Keys()
