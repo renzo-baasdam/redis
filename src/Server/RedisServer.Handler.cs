@@ -61,15 +61,15 @@ public partial class RedisServer
 
     private Message XAdd(string[] args)
     {
-        if (args.Length % 2 != 0 || args.Length < 2 || args[0] != "stream_key") return new ErrorMessage("wrong number of arguments for 'xadd' command");
-        var key = args[1];
+        if (args.Length % 2 != 0 || args.Length < 2) return new ErrorMessage("wrong number of arguments for 'xadd' command");
+        var (key, id) = (args[0], args[1]);
         var value = new Dictionary<string, string>();
         for (int i = 2; i < args.Length; i += 2)
         {
             value.Add(args[i], args[i + 1]);
         }
-        _cache.Add(key, new StreamEntry() { Id = key, Value = value });
-        return new BulkStringMessage(key);
+        _cache.Add(key, new StreamEntry() { Id = id, Value = value });
+        return new BulkStringMessage(id);
     }
 
     private BulkStringMessage Get(string key)
