@@ -16,5 +16,6 @@ internal record StringEntry : RedisEntry
 
 internal record StreamEntry : RedisEntry
 {
+    public string Id { get; set; } = string.Empty;
     public Dictionary<string, string> Value { get; init; } = new();
 }

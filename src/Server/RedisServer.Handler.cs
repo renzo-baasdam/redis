@@ -17,6 +17,7 @@ public partial class RedisServer
             {
                 "GET" => new List<Message> { Get(args[0]) },
                 "SET" => new List<Message> { await Set(args, message) },
+                "XADD" => new List<Message> { XAdd(args) },
                 "TYPE" => new List<Message> { Type(args[0]) },
                 "ECHO" => new List<Message> { new BulkStringMessage(args[0]) },
                 "PING" => new List<Message> { new SimpleStringMessage("PONG") },
@@ -56,6 +57,19 @@ public partial class RedisServer
         // todo don't wait for propagation, but still ensure order
         await Propagate(message);
         return new SimpleStringMessage("OK");
+    }
+
+    private Message XAdd(string[] args)
+    {
+        if (args.Length % 2 != 0 || args.Length < 2 || args[0] != "stream_key") return new ErrorMessage("wrong number of arguments for 'xadd' command");
+        var key = args[1];
+        var value = new Dictionary<string, string>();
+        for (int i = 2; i < args.Length; i += 2)
+        {
+            value.Add(args[i], args[i + 1]);
+        }
+        _cache.Add(key, new StreamEntry() { Id = key, Value = value });
+        return new BulkStringMessage(key);
     }
 
     private BulkStringMessage Get(string key)
@@ -113,7 +127,7 @@ public partial class RedisServer
         int replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
         if (replicasReady >= replicasNeeded) return new IntegerMessage(replicasReady);
 
-        foreach (var replica in _replicas.Values.Where(x => x.AckOffset < x.ExpectedOffset)) 
+        foreach (var replica in _replicas.Values.Where(x => x.AckOffset < x.ExpectedOffset))
             await replica.Send(new ArrayMessage("REPLCONF", "GETACK", "*"));
         var timer = new Stopwatch();
         timer.Start();

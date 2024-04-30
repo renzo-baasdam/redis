@@ -6,6 +6,7 @@ internal static class StringExtensions
 {
     internal static string AsArgumentString(this string str) => $"--{str}";
     internal static string AsSimpleString(this string str) => $"+{str}\r\n";
+    internal static string AsErrorString(this string str) => $"-{str}\r\n";
     internal static string AsBulkString(this string str) => $"${str.Length}\r\n{str}\r\n";
     internal static string AsInteger(this int val) => $":{val}\r\n";
 

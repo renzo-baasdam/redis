@@ -45,3 +45,7 @@ public sealed record IntegerMessage(int Value) : Message
 {
     public override string ToString() => Value.AsInteger();
 }
+public sealed record ErrorMessage(string Value) : Message
+{
+    public override string ToString() => Value.AsErrorString();
+}
