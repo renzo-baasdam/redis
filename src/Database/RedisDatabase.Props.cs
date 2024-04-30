@@ -1,3 +1,4 @@
+using Redis.Entry;
 using Redis.Server;
 
 namespace Redis.Database;
@@ -29,6 +30,6 @@ internal partial class RedisDatabase
         public uint DatabaseHashTableSize { get; set; }
         public uint ExpiryHashTableSize { get; set; }
 
-        public Dictionary<string, RedisValue> Values = new();
+        public Dictionary<string, StringEntry> Values = new();
     }
 }

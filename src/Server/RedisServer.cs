@@ -2,12 +2,6 @@ using Redis.Client;
 
 namespace Redis.Server;
 
-internal record RedisValue
-{
-    public string Value { get; init; } = string.Empty;
-    public DateTime? Expiration { get; init; }
-}
-
 public partial class RedisServer : IDisposable
 {
     public virtual async Task Start()

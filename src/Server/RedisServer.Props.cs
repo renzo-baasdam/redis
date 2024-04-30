@@ -1,5 +1,6 @@
 using Redis.Client;
 using Redis.Database;
+using Redis.Entry;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
@@ -10,7 +11,7 @@ public partial class RedisServer
 {
     protected readonly RedisConfig _config;
     private RedisDatabase? Database { get; set; }
-    private readonly Dictionary<string, RedisValue> _cache = new();
+    private readonly Dictionary<string, RedisEntry> _cache = new();
     private readonly TcpListener _server;
     private readonly ConcurrentDictionary<Guid, RedisClient> _replicas = new();
 

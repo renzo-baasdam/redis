@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Redis.Database;
+using Redis.Entry;
 using Redis.Server;
 
 namespace Redis.Tests.Database;
@@ -26,9 +27,9 @@ public class RdbParser
         dbInfo.Databases.Should().ContainSingle();
         dbInfo.Databases[0].Should().BeEquivalentTo(new RedisDatabase.Database(dbNumber: 0, dbHashTableSize: 1, expiryHashTableSize: 0)
         {
-            Values = new Dictionary<string, RedisValue>
+            Values = new Dictionary<string, StringEntry>
             {
-                { "mykey", new RedisValue { Value = "myval" } }
+                { "mykey", new StringEntry { Value = "myval" } }
             }
         });
     }

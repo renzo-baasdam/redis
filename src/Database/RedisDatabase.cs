@@ -1,3 +1,4 @@
+using Redis.Entry;
 using Redis.Server;
 using System.Text;
 
@@ -51,7 +52,7 @@ internal partial class RedisDatabase
                         var valueType = bytes[index++];
                         var key = DecodeLengthPrefixedString(ref index, bytes);
                         var value = DecodeValue(ref index, bytes, valueType);
-                        db.Values[key] = new RedisValue { Value = value, Expiration = expiration };
+                        db.Values[key] = new StringEntry { Value = value, Expiration = expiration };
                     }
                     Databases.Add(db);
                     break;

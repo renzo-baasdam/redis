@@ -1,4 +1,6 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Redis.Client;
+using Redis.Entry;
 using System.Diagnostics;
 using System.Text;
 
@@ -45,12 +47,12 @@ public partial class RedisServer
         var key = args[0];
         var value = args[1];
         _cache[key] = args.Length >= 3 && args[2].ToUpper() == "PX"
-            ? new RedisValue
+            ? new StringEntry
             {
                 Value = value,
                 Expiration = DateTime.UtcNow.AddMilliseconds(int.Parse(args[3]))
             }
-            : new RedisValue { Value = value };
+            : new StringEntry { Value = value };
         // todo don't wait for propagation, but still ensure order
         await Propagate(message);
         return new SimpleStringMessage("OK");
@@ -58,22 +60,32 @@ public partial class RedisServer
 
     private BulkStringMessage Get(string key)
     {
-        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
-            return new BulkStringMessage(value.Value);
+        if (_cache.TryGetValue(key, out var value)
+            && value is StringEntry stringEntry
+            && (stringEntry.Expiration is not { } expiration || expiration > DateTime.UtcNow))
+            return new BulkStringMessage(stringEntry.Value);
         return new NullBulkStringMessage();
     }
 
     private SimpleStringMessage Type(string key)
     {
-        if (_cache.TryGetValue(key, out var value) && (value.Expiration is not { } expiration || expiration > DateTime.UtcNow))
-            return new SimpleStringMessage("string");
+        if (_cache.TryGetValue(key, out var value) && !value.IsExpired)
+        {
+            return value switch
+            {
+                StringEntry => new SimpleStringMessage("string"),
+                StreamEntry => new SimpleStringMessage("stream"),
+                _ => new SimpleStringMessage("none")
+            };
+        }
         return new SimpleStringMessage("none");
+
     }
 
     private ArrayMessage Keys()
     {
         var keys = _cache
-            .Where(x => x.Value.Expiration is not { } expiration || expiration > DateTime.UtcNow)
+            .Where(x => !x.Value.IsExpired)
             .Select(x => new BulkStringMessage(x.Key))
             .ToList<Message>();
         return new ArrayMessage(keys);
