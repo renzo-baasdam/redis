@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Redis.Client;
 using Redis.Entry;
 using System.Diagnostics;
@@ -61,14 +60,20 @@ public partial class RedisServer
 
     private Message XAdd(string[] args)
     {
-        if (args.Length % 2 != 0 || args.Length < 2) return new ErrorMessage("wrong number of arguments for 'xadd' command");
+        if (args.Length % 2 != 0 || args.Length < 2)
+            return new ErrorMessage("ERR wrong number of arguments for 'xadd' command");
         var (key, id) = (args[0], args[1]);
         var value = new Dictionary<string, string>();
         for (int i = 2; i < args.Length; i += 2)
-        {
             value.Add(args[i], args[i + 1]);
-        }
-        _cache.Add(key, new StreamEntry() { Id = id, Value = value });
+
+        if (!StreamId.TryParse(id, out var newId, out var msg)) return msg;
+        if (!_cache.TryGetValue(key, out var current) || current.IsExpired)
+            _cache.Add(key, new StreamEntry(new StreamItem() { Id = newId.Value, Value = value }));
+        else if (current is not StreamEntry stream)
+            return new ErrorMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
+        else if (!stream.TryAdd(new StreamItem() { Id = newId.Value, Value = value }, out msg))
+            return msg;
         return new BulkStringMessage(id);
     }
 
