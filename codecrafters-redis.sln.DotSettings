@@ -6,6 +6,7 @@
     <s:Boolean x:Key="/Default/UserDictionary/Words/=getack/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=numreplicas/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/UserDictionary/Words/=PSYNC/@EntryIndexedValue">True</s:Boolean>
+	<s:String p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ArrangeObjectCreationWhenTypeNotEvident/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">DO_NOT_SHOW</s:String>
     <s:String p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002EGlobal/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">SUGGESTION</s:String>
     <s:String p5:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002ELocal/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">SUGGESTION</s:String>
     <s:String p5:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=IP/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">IP</s:String>
@@ -16,4 +17,6 @@
     <s:Boolean p5:Key="/Default/UserDictionary/Words/=numreplicas/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
     <s:Boolean p5:Key="/Default/UserDictionary/Words/=onehundredandninetyeight/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
     <s:Boolean p5:Key="/Default/UserDictionary/Words/=psync/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-    <s:Boolean p5:Key="/Default/UserDictionary/Words/=REPLCONF/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean></wpf:ResourceDictionary>
+    <s:Boolean p5:Key="/Default/UserDictionary/Words/=REPLCONF/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+	<s:Boolean p5:Key="/Default/UserDictionary/Words/=WRONGTYPE/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+	<s:Boolean p5:Key="/Default/UserDictionary/Words/=XADD/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean></wpf:ResourceDictionary>

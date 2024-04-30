@@ -45,7 +45,7 @@ internal record StreamEntry : RedisEntry
         return true;
     }
 
-    public bool TryParseId(
+    private bool TryParseId(
         string id,
         [NotNullWhen(true)] out StreamId? streamId,
         [NotNullWhen(false)] out ErrorMessage? msg)
@@ -66,8 +66,9 @@ internal record StreamEntry : RedisEntry
         }
         if (split[1] == "*")
         {
-            var oldId = Items.Last().Id;
-            if (oldId.MillisecondsTime == ms) streamId = new(ms, oldId.SequenceNumber + 1);
+            if (Items.LastOrDefault()?.Id is { } oldId && oldId.MillisecondsTime == ms)
+                streamId = new(ms, oldId.SequenceNumber + 1);
+            if (ms == 0) streamId = new(ms, 1);
             else streamId = new(ms, 0);
             return true;
         }
@@ -97,17 +98,10 @@ public record StreamItem
     }
 }
 
-public enum StreamIdType
+public readonly struct StreamId
 {
-    Determined,
-    PartialAuto,
-    Auto,
-}
-
-public struct StreamId
-{
-    public long MillisecondsTime { get; init; }
-    public long SequenceNumber { get; init; }
+    public long MillisecondsTime { get; }
+    public long SequenceNumber { get; }
 
     public StreamId(long ms, long seq)
     {
@@ -124,9 +118,9 @@ public struct StreamId
     public static bool operator >(StreamId s1, StreamId s2)
         => s1.MillisecondsTime > s2.MillisecondsTime || s1.MillisecondsTime == s2.MillisecondsTime && s1.SequenceNumber > s2.SequenceNumber;
     public static bool operator >=(StreamId s1, StreamId s2)
-        => (s1 > s2) || (s1 == s2);
+        => s1 > s2 || s1 == s2;
     public static bool operator <=(StreamId s1, StreamId s2)
-        => (s1 < s2) || (s1 == s2);
+        => s1 < s2 || s1 == s2;
 
     public override bool Equals(object? obj)
         => obj is StreamId id && this == id;
