@@ -69,7 +69,7 @@ internal record StreamEntry : RedisEntry
         {
             if (Items.LastOrDefault()?.Id is { } oldId && oldId.MillisecondsTime == ms)
                 streamId = new(ms, oldId.SequenceNumber + 1);
-            if (ms == 0) streamId = new(ms, 1);
+            else if (ms == 0) streamId = new(ms, 1);
             else streamId = new(ms, 0);
             return true;
         }
