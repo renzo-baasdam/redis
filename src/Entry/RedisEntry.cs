@@ -28,7 +28,7 @@ internal record StreamEntry : RedisEntry
         msg = null;
         if (item.Id <= Items.Last().Id)
         {
-            msg = new ErrorMessage("The ID specified in XADD is equal or smaller than the target stream top item");
+            msg = new("ERR The ID specified in XADD is equal or smaller than the target stream top item");
             return false;
         }
         Items.Add(item);
