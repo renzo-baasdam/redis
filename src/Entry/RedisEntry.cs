@@ -55,7 +55,7 @@ internal record StreamEntry : RedisEntry
         msg = null;
         if (id == "*")
         {
-            streamId = new(DateTime.UtcNow.Ticks, 0);
+            streamId = new(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 0);
             return true;
         }
 
