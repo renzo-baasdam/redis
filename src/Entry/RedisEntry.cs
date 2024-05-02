@@ -26,9 +26,7 @@ internal record StreamEntry : RedisEntry
         [NotNullWhen(false)] out ErrorMessage? msg)
     {
         entry = new StreamEntry();
-        if(!entry.TryAdd(id, value, out msg))
-            return false;
-        return true;
+        return entry.TryAdd(id, value, out msg);
     }
 
     public bool TryAdd(string id, Dictionary<string, string> value, [NotNullWhen(false)] out ErrorMessage? msg)
@@ -46,6 +44,20 @@ internal record StreamEntry : RedisEntry
         return true;
     }
 
+    public List<StreamItem> GetRange(StreamId lowerBound, StreamId upperBound)
+    {
+        var range = new List<StreamItem>();
+        // todo binary search
+        for (int i = 0; i < Items.Count; i++)
+        {
+            if (lowerBound <= Items[i].Id && Items[i].Id <= upperBound)
+            {
+                range.Add(Items[i]);
+            }
+        }
+        return range;
+    }
+    
     private bool TryParseId(
         string id,
         [NotNullWhen(true)] out StreamId? streamId,
@@ -73,12 +85,12 @@ internal record StreamEntry : RedisEntry
             else streamId = new(ms, 0);
             return true;
         }
-        if (split.Length != 2 || !long.TryParse(split[0], out ms) || !long.TryParse(split[1], out long seq))
+        if (!long.TryParse(split[1], out long seq))
         {
             msg = new("ERR Invalid stream ID specified as stream command argument");
             return false;
         }
-        if (new StreamId(ms, seq) <= new StreamId(0, 0))
+        if (new StreamId(ms, seq) <= StreamId.MinValue)
         {
             msg = new("ERR The ID specified in XADD must be greater than 0-0");
             return false;
@@ -92,10 +104,24 @@ public record StreamItem
 {
     public StreamId Id { get; }
     public Dictionary<string, string> Value { get; init; } = new();
+    
     public StreamItem(StreamId id, Dictionary<string, string> value)
     {
         Id = id;
         Value = value;
+    }
+
+    public Message AsMessage()
+    {
+        var kvs = Value
+            .SelectMany(x => new string[] { x.Key, x.Value })
+            .Select(x => new BulkStringMessage(x))
+            .ToList<Message>();
+        return new ArrayMessage(new List<Message>
+        {
+            new BulkStringMessage(Id.ToString()), 
+            new ArrayMessage(kvs)
+        });
     }
 }
 
@@ -110,6 +136,30 @@ public readonly struct StreamId
         SequenceNumber = seq;
     }
 
+    public static StreamId MinValue => new StreamId(0,0);
+    public static StreamId MaxValue => new StreamId(long.MaxValue,long.MaxValue);
+    
+    public static bool TryParse(
+        string id,
+        [NotNullWhen(true)] out StreamId? streamId,
+        [NotNullWhen(false)] out ErrorMessage? msg)
+    {
+        streamId = null;
+        msg = null;
+
+        var split = id.Split("-");
+        if (split.Length != 2 
+            || !long.TryParse(split[0], out long ms) 
+            || !long.TryParse(split[1], out long seq)
+            || new StreamId(ms, seq) < StreamId.MinValue)
+        {
+            msg = new("ERR Invalid stream ID specified as stream command argument");
+            return false;
+        }
+        streamId = new(ms, seq);
+        return true;
+    }
+    
     public override string ToString() => $"{MillisecondsTime}-{SequenceNumber}";
     
     public static bool operator ==(StreamId s1, StreamId s2)

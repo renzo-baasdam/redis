@@ -23,11 +23,13 @@ public partial class RedisServer
                 "KEYS" => new List<Message> { Keys() },
                 "INFO" => new List<Message> { Info(args) },
                 "WAIT" => new List<Message> { await Wait(args) },
+                "XRANGE" => new List<Message> { XRange(args) },
                 "CONFIG" => new List<Message> { Config(args) },
                 "PSYNC" => await PSync(args, client),
                 "REPLCONF" => ReplConf(args, client) is { } msg
                     ? new List<Message> { msg }
                     : new List<Message>(),
+                "COMMAND" => new List<Message> { new ArrayMessage() },
                 _ => new List<Message>()
             };
             return response;
@@ -104,7 +106,6 @@ public partial class RedisServer
             };
         }
         return new SimpleStringMessage("none");
-
     }
 
     private ArrayMessage Keys()
@@ -150,6 +151,34 @@ public partial class RedisServer
         }
         replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
         return new IntegerMessage(replicasReady);
+    }
+    
+    private Message XRange(string[] args)
+    {
+        if (Type(args[0]).Value is not "stream") 
+            return new ErrorMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
+        if (args.Length is not 3) 
+            return new ErrorMessage("ERR wrong number of arguments for 'xrange' command");
+        
+        StreamId lb, ub;
+        if (args[1] == "-") lb = StreamId.MinValue;
+        else if (long.TryParse(args[1], out long ms))
+            lb = new StreamId(ms, 0);
+        else if (StreamId.TryParse(args[1], out var id, out var msg))
+            lb = id.Value;
+        else return msg;
+        
+        if (args[2] == "+") ub = StreamId.MaxValue;
+        else if (long.TryParse(args[2], out long ms))
+            ub = new StreamId(ms, long.MaxValue);
+        else if (StreamId.TryParse(args[2], out var id, out var msg))
+            ub = id.Value;
+        else return msg;
+
+        var range = ((StreamEntry)_cache[args[0]]).GetRange(lb, ub);
+        var rangeMessages = range.Select(x => x.AsMessage()).ToList();
+        
+        return new ArrayMessage(rangeMessages);
     }
 
     private ArrayMessage Config(string[] args)

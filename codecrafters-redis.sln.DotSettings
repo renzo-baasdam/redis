@@ -19,4 +19,5 @@
     <s:Boolean p5:Key="/Default/UserDictionary/Words/=psync/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
     <s:Boolean p5:Key="/Default/UserDictionary/Words/=REPLCONF/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
 	<s:Boolean p5:Key="/Default/UserDictionary/Words/=WRONGTYPE/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
-	<s:Boolean p5:Key="/Default/UserDictionary/Words/=XADD/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean></wpf:ResourceDictionary>
+	<s:Boolean p5:Key="/Default/UserDictionary/Words/=XADD/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean>
+	<s:Boolean p5:Key="/Default/UserDictionary/Words/=xrange/@EntryIndexedValue" xmlns:p5="http://schemas.microsoft.com/winfx/2006/xaml">True</s:Boolean></wpf:ResourceDictionary>
