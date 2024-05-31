@@ -188,17 +188,27 @@ public partial class RedisServer
         var read = new List<Message>();
         var timer = new Stopwatch();
         timer.Start();
+        var lastIds = new string?[streamCount];
         do
         {
             for (int j = 0; j < streamCount; j++)
             {
-                if (args[i + streamCount + j] is "-") 
+                var entryId = args[i + streamCount + j];
+                if (entryId is "-") 
                     return new ErrorMessage("ERR Invalid stream ID specified as stream command argument");
+                if (lastIds[j] is null && entryId is "$")
+                {
+                    if (!_cache.TryGetValue(args[i + j], out var entry))
+                        return new NullBulkStringMessage();
+                    if (entry is not StreamEntry streamEntry)
+                        return new ErrorMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
+                    lastIds[j] = streamEntry.LastId!.Value.ToString();
+                }
                 var range = XRange(
                     new string[]
                     {
                         args[i + j],
-                        "(" + args[i + streamCount + j],
+                        "(" + (lastIds[j] ?? args[i + streamCount + j]),
                         "+"
                     }); 
                 if (range is ErrorMessage msg) return msg;
