@@ -24,7 +24,7 @@ public partial class RedisServer
                 "INFO" => new List<Message> { Info(args) },
                 "WAIT" => new List<Message> { await Wait(args) },
                 "XRANGE" => new List<Message> { XRange(args) },
-                "XREAD" => new List<Message> { XRead(args) },
+                "XREAD" => new List<Message> { await XRead(args) },
                 "CONFIG" => new List<Message> { Config(args) },
                 "PSYNC" => await PSync(args, client),
                 "REPLCONF" => ReplConf(args, client) is { } msg
@@ -170,35 +170,52 @@ public partial class RedisServer
         return new ArrayMessage(rangeMessages);
     }
     
-    private Message XRead(string[] args)
+    private async Task<Message> XRead(string[] args)
     {
         int i = 0;
+        int? blockingMs = null;
         while (args[i].ToLowerInvariant() != "streams")
+        {
+            if (args[i].ToLowerInvariant() == "block" 
+                && int.TryParse(args[i+1], out int ms))
+            {
+                blockingMs = ms == 0 ? int.MaxValue : ms;
+            }
             i += 2;
+        }
         ++i;
         int streamCount = (args.Length - i)/2;
         var read = new List<Message>();
-        for (int j = 0; j < streamCount; j++)
+        var timer = new Stopwatch();
+        timer.Start();
+        do
         {
-            if (args[i + streamCount + j] is "-") 
-                return new ErrorMessage("ERR Invalid stream ID specified as stream command argument");
-            var range = XRange(new string[]
+            for (int j = 0; j < streamCount; j++)
             {
-                args[i + j],
-                "(" + args[i + streamCount + j],
-                "+"
-            });
-            if (range is ErrorMessage msg) return msg;
-            if (range is ArrayMessage { Values.Count: 0 })
-                continue;
-            var kv = new List<Message>
-            {
-                new BulkStringMessage(args[i + j]),
-                range
-            };
-            read.Add(new ArrayMessage(kv));
-        }
-        return new ArrayMessage(read);
+                if (args[i + streamCount + j] is "-") 
+                    return new ErrorMessage("ERR Invalid stream ID specified as stream command argument");
+                var range = XRange(
+                    new string[]
+                    {
+                        args[i + j],
+                        "(" + args[i + streamCount + j],
+                        "+"
+                    }); 
+                if (range is ErrorMessage msg) return msg;
+                if (range is ArrayMessage { Values.Count: 0 })
+                    continue;
+                var kv = new List<Message>
+                {
+                    new BulkStringMessage(args[i + j]),
+                    range
+                };
+                read.Add(new ArrayMessage(kv));
+            }
+            await Task.Delay(10);
+        } while (read.Count == 0 && blockingMs is {} ms && timer.ElapsedMilliseconds < ms);
+        return read.Count > 0
+            ? new ArrayMessage(read)
+            : new NullBulkStringMessage();
     }
 
     private ArrayMessage Config(string[] args)
