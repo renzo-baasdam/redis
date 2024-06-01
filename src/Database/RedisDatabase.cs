@@ -1,5 +1,4 @@
 using Redis.Entry;
-using Redis.Server;
 using System.Text;
 
 namespace Redis.Database;

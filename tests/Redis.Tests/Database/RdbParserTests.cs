@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Redis.Database;
 using Redis.Entry;
-using Redis.Server;
 
 namespace Redis.Tests.Database;
 

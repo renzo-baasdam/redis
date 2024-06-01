@@ -18,10 +18,10 @@ internal record StreamEntry : RedisEntry
 {
     public List<StreamItem> Items { get; } = new();
     public StreamId? LastId => Items.LastOrDefault()?.Id;
-    
+
     public static bool TryCreate(
-        string id, 
-        Dictionary<string, string> value, 
+        string id,
+        Dictionary<string, string> value,
         [NotNullWhen(true)] out StreamEntry? entry,
         [NotNullWhen(false)] out ErrorMessage? msg)
     {
@@ -43,7 +43,7 @@ internal record StreamEntry : RedisEntry
         Items.Add(new StreamItem(streamId.Value, value));
         return true;
     }
-    
+
     public List<StreamItem> GetRange(StreamRangeCondition streamRangeCondition)
     {
         var range = new List<StreamItem>();
@@ -57,7 +57,7 @@ internal record StreamEntry : RedisEntry
         }
         return range;
     }
-    
+
     private bool TryParseId(
         string id,
         [NotNullWhen(true)] out StreamId? streamId,
@@ -104,7 +104,7 @@ public record StreamItem
 {
     public StreamId Id { get; }
     public Dictionary<string, string> Value { get; init; } = new();
-    
+
     public StreamItem(StreamId id, Dictionary<string, string> value)
     {
         Id = id;
@@ -119,7 +119,7 @@ public record StreamItem
             .ToList<Message>();
         return new ArrayMessage(new List<Message>
         {
-            new BulkStringMessage(Id.ToString()), 
+            new BulkStringMessage(Id.ToString()),
             new ArrayMessage(kvs)
         });
     }
@@ -131,16 +131,16 @@ public class StreamRangeCondition
     private Func<StreamId, bool> UpperBoundCondition { get; set; }
 
     public bool IsSatisfiedBy(StreamId id) => LowerBoundCondition(id) && UpperBoundCondition(id);
-    
+
     public static bool TryCreate(
-        string lb, 
-        string ub, 
-        [NotNullWhen(true)] out StreamRangeCondition? range, 
+        string lb,
+        string ub,
+        [NotNullWhen(true)] out StreamRangeCondition? range,
         [NotNullWhen(false)] out ErrorMessage? msg)
     {
         range = null;
         msg = null;
-        var lbOpen = false;        
+        var lbOpen = false;
         var ubOpen = false;
         Func<StreamId, bool> lowerBoundCondition;
         Func<StreamId, bool> upperBoundCondition;
@@ -157,11 +157,11 @@ public class StreamRangeCondition
         if (lb == "-") lowerBoundCondition = _ => true;
         else if (long.TryParse(lb, out long lbMs))
         {
-            lowerBoundCondition = lbOpen 
+            lowerBoundCondition = lbOpen
                 ? id => new StreamId(lbMs, 0) < id
                 : id => new StreamId(lbMs, 0) <= id;
         }
-        else if (lb.Split('-') is { Length: 2 } split 
+        else if (lb.Split('-') is { Length: 2 } split
                  && long.TryParse(split[0], out lbMs)
                  && long.TryParse(split[1], out long lbSeq))
         {
@@ -170,7 +170,7 @@ public class StreamRangeCondition
                 : id => new StreamId(lbMs, lbSeq) <= id;
         }
         else
-        { 
+        {
             msg = new("ERR Invalid stream ID specified as stream command argument");
             return false;
         }
@@ -181,7 +181,7 @@ public class StreamRangeCondition
                 ? id => id < new StreamId(ubMs, long.MaxValue)
                 : id => id <= new StreamId(ubMs, long.MaxValue);
         }
-        else if (ub.Split('-') is { Length: 2 } split 
+        else if (ub.Split('-') is { Length: 2 } split
                  && long.TryParse(split[0], out ubMs)
                  && long.TryParse(split[1], out long ubSeq))
         {
@@ -190,14 +190,14 @@ public class StreamRangeCondition
                 : id => id <= new StreamId(ubMs, ubSeq);
         }
         else
-        { 
+        {
             msg = new("ERR Invalid stream ID specified as stream command argument");
             return false;
         }
         range = new StreamRangeCondition(lowerBoundCondition, upperBoundCondition);
         return true;
     }
-    
+
     private StreamRangeCondition(Func<StreamId, bool> lb, Func<StreamId, bool> ub)
     {
         LowerBoundCondition = lb;
@@ -216,9 +216,9 @@ public readonly struct StreamId
         SequenceNumber = seq;
     }
 
-    public static StreamId MinValue => new StreamId(0,0);
-    public static StreamId MaxValue => new StreamId(long.MaxValue,long.MaxValue);
-    
+    public static StreamId MinValue => new StreamId(0, 0);
+    public static StreamId MaxValue => new StreamId(long.MaxValue, long.MaxValue);
+
     private static bool TryParse(
         string id,
         [NotNullWhen(true)] out StreamId? streamId,
@@ -232,8 +232,8 @@ public readonly struct StreamId
         {
             split[0] = split[0][1..];
         }
-        if (split.Length != 2 
-            || !long.TryParse(split[0], out long ms) 
+        if (split.Length != 2
+            || !long.TryParse(split[0], out long ms)
             || !long.TryParse(split[1], out long seq)
             || new StreamId(ms, seq) < StreamId.MinValue)
         {
@@ -243,9 +243,9 @@ public readonly struct StreamId
         streamId = new(ms, seq);
         return true;
     }
-    
+
     public override string ToString() => $"{MillisecondsTime}-{SequenceNumber}";
-    
+
     public static bool operator ==(StreamId s1, StreamId s2)
         => s1.MillisecondsTime == s2.MillisecondsTime && s1.SequenceNumber == s2.SequenceNumber;
     public static bool operator !=(StreamId s1, StreamId s2)

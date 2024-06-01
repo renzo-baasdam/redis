@@ -153,12 +153,12 @@ public partial class RedisServer
         replicasReady = _replicas.Values.Count(x => x.AckOffset >= x.ExpectedOffset);
         return new IntegerMessage(replicasReady);
     }
-    
+
     private Message XRange(string[] args)
     {
-        if (Type(args[0]).Value is not "stream") 
+        if (Type(args[0]).Value is not "stream")
             return new ErrorMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
-        if (args.Length is not 3) 
+        if (args.Length is not 3)
             return new ErrorMessage("ERR wrong number of arguments for 'xrange' command");
 
         if (!StreamRangeCondition.TryCreate(args[1], args[2], out var condition, out var msg))
@@ -166,25 +166,25 @@ public partial class RedisServer
 
         var range = ((StreamEntry)_cache[args[0]]).GetRange(condition);
         var rangeMessages = range.Select(x => x.AsMessage()).ToList();
-        
+
         return new ArrayMessage(rangeMessages);
     }
-    
+
     private async Task<Message> XRead(string[] args)
     {
         int i = 0;
         int? blockingMs = null;
         while (args[i].ToLowerInvariant() != "streams")
         {
-            if (args[i].ToLowerInvariant() == "block" 
-                && int.TryParse(args[i+1], out int ms))
+            if (args[i].ToLowerInvariant() == "block"
+                && int.TryParse(args[i + 1], out int ms))
             {
                 blockingMs = ms == 0 ? int.MaxValue : ms;
             }
             i += 2;
         }
         ++i;
-        int streamCount = (args.Length - i)/2;
+        int streamCount = (args.Length - i) / 2;
         var read = new List<Message>();
         var timer = new Stopwatch();
         timer.Start();
@@ -194,7 +194,7 @@ public partial class RedisServer
             for (int j = 0; j < streamCount; j++)
             {
                 var entryId = args[i + streamCount + j];
-                if (entryId is "-") 
+                if (entryId is "-")
                     return new ErrorMessage("ERR Invalid stream ID specified as stream command argument");
                 if (lastIds[j] is null && entryId is "$")
                 {
@@ -210,7 +210,7 @@ public partial class RedisServer
                         args[i + j],
                         "(" + (lastIds[j] ?? args[i + streamCount + j]),
                         "+"
-                    }); 
+                    });
                 if (range is ErrorMessage msg) return msg;
                 if (range is ArrayMessage { Values.Count: 0 })
                     continue;
@@ -222,7 +222,7 @@ public partial class RedisServer
                 read.Add(new ArrayMessage(kv));
             }
             await Task.Delay(10);
-        } while (read.Count == 0 && blockingMs is {} ms && timer.ElapsedMilliseconds < ms);
+        } while (read.Count == 0 && blockingMs is { } ms && timer.ElapsedMilliseconds < ms);
         return read.Count > 0
             ? new ArrayMessage(read)
             : new NullBulkStringMessage();
