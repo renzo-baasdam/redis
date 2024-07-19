@@ -6,6 +6,9 @@ public abstract record Message
 {
     public int Count => ToBytes().Length;
     public virtual byte[] ToBytes() => ToString().AsUtf8();
+
+
+    public IReadOnlyCollection<Message> Singleton() => [this];
 }
 
 public sealed record SimpleStringMessage(string Value) : Message

@@ -7,35 +7,33 @@ namespace Redis.Server;
 
 public partial class RedisServer
 {
-    protected virtual async Task<IList<Message>> Handler(Message message, RedisClient client)
+    protected virtual async Task<IReadOnlyCollection<Message>> Handler(Message message, RedisClient client)
     {
         if (message is ArrayMessage array)
         {
             (string command, string[] args) = ParseCommand(array);
             var response = command switch
             {
-                "GET" => new List<Message> { Get(args[0]) },
-                "SET" => new List<Message> { await Set(args, message) },
-                "XADD" => new List<Message> { XAdd(args) },
-                "TYPE" => new List<Message> { Type(args[0]) },
-                "ECHO" => new List<Message> { new BulkStringMessage(args[0]) },
-                "PING" => new List<Message> { new SimpleStringMessage("PONG") },
-                "KEYS" => new List<Message> { Keys() },
-                "INFO" => new List<Message> { Info(args) },
-                "WAIT" => new List<Message> { await Wait(args) },
-                "XRANGE" => new List<Message> { XRange(args) },
-                "XREAD" => new List<Message> { await XRead(args) },
-                "CONFIG" => new List<Message> { Config(args) },
-                "PSYNC" => await PSync(args, client),
-                "REPLCONF" => ReplConf(args, client) is { } msg
-                    ? new List<Message> { msg }
-                    : new List<Message>(),
-                "COMMAND" => new List<Message> { new ArrayMessage() },
-                _ => new List<Message>()
+                "GET" /*......*/ => Get(args[0]).Singleton(),
+                "SET" /*......*/ => (await Set(args, message)).Singleton(),
+                "XADD" /*.....*/ => XAdd(args).Singleton(),
+                "TYPE" /*.....*/ => Type(args[0]).Singleton(),
+                "ECHO" /*.....*/ => new BulkStringMessage(args[0]).Singleton(),
+                "PING" /*.....*/ => new SimpleStringMessage("PONG").Singleton(),
+                "KEYS" /*.....*/ => Keys().Singleton(),
+                "INFO" /*.....*/ => Info(args).Singleton(),
+                "WAIT" /*.....*/ => (await Wait(args)).Singleton(),
+                "XRANGE" /*...*/ => XRange(args).Singleton(),
+                "XREAD" /*....*/ => (await XRead(args)).Singleton(),
+                "CONFIG" /*...*/ => Config(args).Singleton(),
+                "PSYNC" /*....*/ => await PSync(args, client),
+                "REPLCONF" /*.*/ => ReplConf(args, client)?.Singleton() ?? [],
+                "COMMAND" /*..*/ => new ArrayMessage().Singleton(),
+                _ => []
             };
             return response;
         }
-        return new List<Message>();
+        return [];
     }
 
     protected static (string Command, string[] Args) ParseCommand(ArrayMessage message)
@@ -57,7 +55,8 @@ public partial class RedisServer
             }
             : new StringEntry { Value = value };
         // todo don't wait for propagation, but still ensure order
-        await Propagate(message);
+        // misschien met events
+        Propagate(message);
         return new SimpleStringMessage("OK");
     }
 
@@ -257,6 +256,7 @@ public partial class RedisServer
         if (args.Length >= 1 && args[0].ToLower() == "ack" && int.TryParse(args[1], out int offset))
         {
             client.AckOffset = offset;
+            // event
             return null;
         }
         if (args.Length >= 1 && args[0].ToLower() == "listening-port" && int.TryParse(args[1], out var _))
@@ -280,8 +280,14 @@ public partial class RedisServer
             _replicas.TryAdd(client.Id, client);
             client.ClientType = "repl";
             client.SentOffset = (offset >= 0 ? offset : 0);
+            // bug?
             return new List<Message>();
         }
         return new List<Message> { new NullBulkStringMessage() };
     }
+}
+
+file static class MessageExtensions
+{
+
 }
